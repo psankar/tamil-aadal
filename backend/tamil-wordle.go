@@ -133,5 +133,6 @@ func splitWordGetLetters(word string) ([]string, error) {
 func main() {
 	http.HandleFunc("/get-current-word-len", getCurrentWordLenHandler)
 	http.HandleFunc("/verify-word", verifyWordHandler)
+	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.ListenAndServe(":8080", nil)
 }

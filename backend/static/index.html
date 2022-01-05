@@ -1,0 +1,76 @@
+<html>
+  <head>
+    <title>Tamil Wordle</title>
+  </head>
+
+  <body>
+    <label id="lengthLabel"></label> எழுத்து(க்)கள் அளவு நீளமான தமிழ்ச்சொல்லைத்
+    தட்டச்சி 'சரி' பொத்தானை அழுத்தவும் <br />
+    <input type="text" id="curword" />
+    <button onclick="process()">சரி</button>
+  </body>
+
+  <script>
+    function process() {
+      var str = document.getElementById("curword").value;
+
+      var diacritics = {
+        "\u0B82": true,
+        "\u0BBE": true,
+        "\u0BBF": true,
+        "\u0BC0": true,
+        "\u0BC1": true,
+        "\u0BC2": true,
+        "\u0BC6": true,
+        "\u0BC7": true,
+        "\u0BC8": true,
+        "\u0BCA": true,
+        "\u0BCB": true,
+        "\u0BCC": true,
+        "\u0BCD": true,
+        "\u0BD7": true,
+      };
+
+      var targetList = [];
+      for (var i = 0; i != str.length; ++i) {
+        var ch = str[i];
+        diacritics[ch]
+          ? (targetList[targetList.length - 1] += ch)
+          : targetList.push(ch);
+      }
+
+      const http = new XMLHttpRequest();
+      http.open("POST", "/verify-word");
+      http.setRequestHeader("Content-Type", "application/json");
+      http.send(JSON.stringify(targetList));
+
+      http.onreadystatechange = (e) => {
+        console.log(http.responseText);
+      };
+    }
+
+    function loadLen() {
+      const http = new XMLHttpRequest();
+      http.open("GET", "/get-current-word-len");
+      http.onreadystatechange = (e) => {
+        if (http.readyState === XMLHttpRequest.DONE) {
+          var status = http.status;
+
+          if (status !== 200) {
+            console.log("some error happened", http.status);
+            alert("Error loading the game!");
+            return;
+          }
+
+          var jsonResponse = JSON.parse(http.responseText);
+          var lengthLabel = document.getElementById("lengthLabel");
+          console.log(lengthLabel, jsonResponse.Length);
+          lengthLabel.innerText = jsonResponse.Length;
+        }
+      };
+      http.send();
+    }
+
+    window.onload = loadLen();
+  </script>
+</html>
