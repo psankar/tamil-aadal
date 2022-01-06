@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"unicode"
@@ -17,6 +18,7 @@ const (
 var todayLetters []string
 var todayLettersMap map[string]struct{}
 var isDiacritic map[rune]struct{}
+var tmpl *template.Template
 
 func init() {
 	var empty struct{}
@@ -46,6 +48,12 @@ func init() {
 	todayLettersMap = make(map[string]struct{})
 	for _, letter := range todayLetters {
 		todayLettersMap[letter] = empty
+	}
+
+	tmpl, err = template.New("wordle").Parse(htmlFile)
+	if err != nil {
+		log.Fatal(err)
+		return
 	}
 }
 
@@ -83,7 +91,7 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 
 	var response []string
 	for i := 0; i < len(letters); i++ {
-		log.Printf("DEBUG: %q == %q", letters[i], todayLetters[i])
+		// log.Printf("DEBUG: %q == %q", letters[i], todayLetters[i])
 		if letters[i] == todayLetters[i] {
 			response = append(response, LetterMatched)
 		} else {
@@ -130,9 +138,151 @@ func splitWordGetLetters(word string) ([]string, error) {
 	return letters, nil
 }
 
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl.Execute(w, nil)
+}
+
 func main() {
 	http.HandleFunc("/get-current-word-len", getCurrentWordLenHandler)
 	http.HandleFunc("/verify-word", verifyWordHandler)
-	http.Handle("/", http.FileServer(http.Dir("./static")))
+	http.HandleFunc("/", homeHandler)
 	http.ListenAndServe(":8080", nil)
 }
+
+const htmlFile = `
+<html>
+  <meta charset="UTF-8" />
+
+  <head>
+    <title>Tamil Wordle</title>
+  </head>
+
+  <body>
+    <label id="lengthLabel"></label> எழுத்து(க்)கள் அளவு நீளமான தமிழ்ச்சொல்லை,
+    தமிழில் தட்டச்சு செய்து, 'சரி' பொத்தானை அழுத்தவும்
+    <hr />
+	<p>❤️ - சரியான எழுத்து</p>
+    <p>&#128584; - இல்லாத எழுத்து, கடல்லையே இல்லையாம்</p>
+    <p>&#128064; - தவறான இடத்தில் உள்ள சரியான எழுத்து</p>
+    <input type="text" id="curword" />
+    <button onclick="process()">சரி</button>
+    <hr />
+    <div id="tilesDiv"></div>
+    <hr />
+    <div id="historyDiv"></div>
+  </body>
+
+  <script>
+    function process() {
+      var str = document.getElementById("curword").value.trim();
+
+      var diacritics = {
+        "\u0B82": true,
+        "\u0BBE": true,
+        "\u0BBF": true,
+        "\u0BC0": true,
+        "\u0BC1": true,
+        "\u0BC2": true,
+        "\u0BC6": true,
+        "\u0BC7": true,
+        "\u0BC8": true,
+        "\u0BCA": true,
+        "\u0BCB": true,
+        "\u0BCC": true,
+        "\u0BCD": true,
+        "\u0BD7": true,
+      };
+
+      var targetList = [];
+      for (var i = 0; i != str.length; i++) {
+        var ch = str[i];
+        diacritics[ch]
+          ? (targetList[targetList.length - 1] += ch)
+          : targetList.push(ch);
+      }
+
+      const http = new XMLHttpRequest();
+      http.open("POST", "/verify-word");
+      http.setRequestHeader("Content-Type", "application/json");
+      http.send(JSON.stringify(targetList));
+
+      http.onreadystatechange = (e) => {
+        if (http.readyState === XMLHttpRequest.DONE) {
+          switch (http.status) {
+            case 202:
+              alert("சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள் !!! If you are interested, copy and paste the emojis in social media.");
+              var tilesDiv = document.getElementById("tilesDiv");
+              var newLabel = document.createElement("Label");
+              for (var i = 0; i < jsonResponse.length; i++) {
+                newLabel.innerHTML += " ❤️ ";
+              }
+              tilesDiv.appendChild(newLabel);
+
+              return;
+            case 200:
+              jsonResponse = JSON.parse(http.responseText);
+
+              var historyDiv = document.getElementById("historyDiv");
+              var historyEntry = document.createElement("Label");
+              historyEntry.innerHTML = str;
+              var historyBreak = document.createElement("br");
+              historyDiv.appendChild(historyEntry);
+              historyDiv.appendChild(historyBreak);
+
+              var tilesDiv = document.getElementById("tilesDiv");
+              var newLabel = document.createElement("Label");
+
+              for (var i = 0; i < jsonResponse.length; i++) {
+                var resp = jsonResponse[i];
+                switch (resp) {
+                  case "LETTER_NOT_FOUND":
+                    newLabel.innerHTML += " &#128584; ";
+                    break;
+                  case "LETTER_ELSEWHERE":
+                    newLabel.innerHTML += " &#128064; ";
+                    break;
+                  case "LETTER_MATCHED":
+                    newLabel.innerHTML += " ❤️ ";
+                    break;
+                  default:
+                    alert("Error in game:", resp);
+                    break;
+                }
+              }
+              tilesDiv.appendChild(newLabel);
+              tilesBreak = document.createElement("br");
+              tilesDiv.appendChild(tilesBreak);
+              return;
+            default:
+              alert(http.responseText);
+              return;
+          }
+        }
+      };
+    }
+
+    function loadLen() {
+      const http = new XMLHttpRequest();
+      http.open("GET", "/get-current-word-len");
+      http.onreadystatechange = (e) => {
+        if (http.readyState === XMLHttpRequest.DONE) {
+          var status = http.status;
+
+          if (status !== 200) {
+            console.log("some error happened", http.status);
+            alert("Error loading the game!");
+            return;
+          }
+
+          var jsonResponse = JSON.parse(http.responseText);
+          var lengthLabel = document.getElementById("lengthLabel");
+          lengthLabel.innerText = jsonResponse.Length;
+        }
+      };
+      http.send();
+    }
+
+    window.onload = loadLen();
+  </script>
+</html>
+`
