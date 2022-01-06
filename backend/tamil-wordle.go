@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"unicode"
 )
 
@@ -143,146 +144,161 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	log.Print("starting server...")
+
 	http.HandleFunc("/get-current-word-len", getCurrentWordLenHandler)
 	http.HandleFunc("/verify-word", verifyWordHandler)
 	http.HandleFunc("/", homeHandler)
-	http.ListenAndServe(":8080", nil)
+
+	// Determine port for HTTP service.
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+		log.Printf("defaulting to port %s", port)
+	}
+
+	// Start HTTP server.
+	log.Printf("listening on port %s", port)
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
+		log.Fatal(err)
+	}
 }
 
-const htmlFile = `
-<html>
-  <meta charset="UTF-8" />
+const htmlFile = `<html>
+<meta charset="UTF-8" />
 
-  <head>
-    <title>Tamil Wordle</title>
-  </head>
+<head>
+  <title>Tamil Wordle</title>
+</head>
 
-  <body>
-    <label id="lengthLabel"></label> எழுத்து(க்)கள் அளவு நீளமான தமிழ்ச்சொல்லை,
-    தமிழில் தட்டச்சு செய்து, 'சரி' பொத்தானை அழுத்தவும்
-    <hr />
-	<p>❤️ - சரியான எழுத்து</p>
-    <p>&#128584; - இல்லாத எழுத்து, கடல்லையே இல்லையாம்</p>
-    <p>&#128064; - தவறான இடத்தில் உள்ள சரியான எழுத்து</p>
-    <input type="text" id="curword" />
-    <button onclick="process()">சரி</button>
-    <hr />
-    <div id="tilesDiv"></div>
-    <hr />
-    <div id="historyDiv"></div>
-  </body>
+<body>
+  <label id="lengthLabel"></label> எழுத்து(க்)கள் அளவு நீளமான தமிழ்ச்சொல்லை,
+  தமிழில் தட்டச்சு செய்து, 'சரி' பொத்தானை அழுத்தவும் <br />
+  <input type="text" id="curword" />
+  <button onclick="process()">சரி</button>
+  <hr />
+  <p>❤️ - சரியான எழுத்து</p>
+  <p>&#128584; - இல்லாத எழுத்து, கடல்லையே இல்லையாம்</p>
+  <p>&#128064; - தவறான இடத்தில் உள்ள சரியான எழுத்து</p>
+  <hr />
+  <div id="tilesDiv"></div>
+  <hr />
+  <div id="historyDiv"></div>
+</body>
 
-  <script>
-    function process() {
-      var str = document.getElementById("curword").value.trim();
+<script>
+  function process() {
+	var str = document.getElementById("curword").value.trim();
 
-      var diacritics = {
-        "\u0B82": true,
-        "\u0BBE": true,
-        "\u0BBF": true,
-        "\u0BC0": true,
-        "\u0BC1": true,
-        "\u0BC2": true,
-        "\u0BC6": true,
-        "\u0BC7": true,
-        "\u0BC8": true,
-        "\u0BCA": true,
-        "\u0BCB": true,
-        "\u0BCC": true,
-        "\u0BCD": true,
-        "\u0BD7": true,
-      };
+	var diacritics = {
+	  "\u0B82": true,
+	  "\u0BBE": true,
+	  "\u0BBF": true,
+	  "\u0BC0": true,
+	  "\u0BC1": true,
+	  "\u0BC2": true,
+	  "\u0BC6": true,
+	  "\u0BC7": true,
+	  "\u0BC8": true,
+	  "\u0BCA": true,
+	  "\u0BCB": true,
+	  "\u0BCC": true,
+	  "\u0BCD": true,
+	  "\u0BD7": true,
+	};
 
-      var targetList = [];
-      for (var i = 0; i != str.length; i++) {
-        var ch = str[i];
-        diacritics[ch]
-          ? (targetList[targetList.length - 1] += ch)
-          : targetList.push(ch);
-      }
+	var targetList = [];
+	for (var i = 0; i != str.length; i++) {
+	  var ch = str[i];
+	  diacritics[ch]
+		? (targetList[targetList.length - 1] += ch)
+		: targetList.push(ch);
+	}
 
-      const http = new XMLHttpRequest();
-      http.open("POST", "/verify-word");
-      http.setRequestHeader("Content-Type", "application/json");
-      http.send(JSON.stringify(targetList));
+	const http = new XMLHttpRequest();
+	http.open("POST", "/verify-word");
+	http.setRequestHeader("Content-Type", "application/json");
+	http.send(JSON.stringify(targetList));
 
-      http.onreadystatechange = (e) => {
-        if (http.readyState === XMLHttpRequest.DONE) {
-          switch (http.status) {
-            case 202:
-              alert("சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள் !!! If you are interested, copy and paste the emojis in social media.");
-              var tilesDiv = document.getElementById("tilesDiv");
-              var newLabel = document.createElement("Label");
-              for (var i = 0; i < jsonResponse.length; i++) {
-                newLabel.innerHTML += " ❤️ ";
-              }
-              tilesDiv.appendChild(newLabel);
+	http.onreadystatechange = (e) => {
+	  if (http.readyState === XMLHttpRequest.DONE) {
+		switch (http.status) {
+		  case 202:
+			alert(
+			  "சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள் !!! If you are interested, copy and paste the emoji table to social media."
+			);
+			var tilesDiv = document.getElementById("tilesDiv");
+			var newLabel = document.createElement("Label");
+			for (var i = 0; i < jsonResponse.length; i++) {
+			  newLabel.innerHTML += " ❤️ ";
+			}
+			tilesDiv.appendChild(newLabel);
 
-              return;
-            case 200:
-              jsonResponse = JSON.parse(http.responseText);
+			return;
+		  case 200:
+			jsonResponse = JSON.parse(http.responseText);
 
-              var historyDiv = document.getElementById("historyDiv");
-              var historyEntry = document.createElement("Label");
-              historyEntry.innerHTML = str;
-              var historyBreak = document.createElement("br");
-              historyDiv.appendChild(historyEntry);
-              historyDiv.appendChild(historyBreak);
+			var historyDiv = document.getElementById("historyDiv");
+			var historyEntry = document.createElement("Label");
+			historyEntry.innerHTML = str;
+			var historyBreak = document.createElement("br");
+			historyDiv.appendChild(historyEntry);
+			historyDiv.appendChild(historyBreak);
 
-              var tilesDiv = document.getElementById("tilesDiv");
-              var newLabel = document.createElement("Label");
+			var tilesDiv = document.getElementById("tilesDiv");
+			var newLabel = document.createElement("Label");
 
-              for (var i = 0; i < jsonResponse.length; i++) {
-                var resp = jsonResponse[i];
-                switch (resp) {
-                  case "LETTER_NOT_FOUND":
-                    newLabel.innerHTML += " &#128584; ";
-                    break;
-                  case "LETTER_ELSEWHERE":
-                    newLabel.innerHTML += " &#128064; ";
-                    break;
-                  case "LETTER_MATCHED":
-                    newLabel.innerHTML += " ❤️ ";
-                    break;
-                  default:
-                    alert("Error in game:", resp);
-                    break;
-                }
-              }
-              tilesDiv.appendChild(newLabel);
-              tilesBreak = document.createElement("br");
-              tilesDiv.appendChild(tilesBreak);
-              return;
-            default:
-              alert(http.responseText);
-              return;
-          }
-        }
-      };
-    }
+			for (var i = 0; i < jsonResponse.length; i++) {
+			  var resp = jsonResponse[i];
+			  switch (resp) {
+				case "LETTER_NOT_FOUND":
+				  newLabel.innerHTML += " &#128584; ";
+				  break;
+				case "LETTER_ELSEWHERE":
+				  newLabel.innerHTML += " &#128064; ";
+				  break;
+				case "LETTER_MATCHED":
+				  newLabel.innerHTML += " ❤️ ";
+				  break;
+				default:
+				  alert("Error in game:", resp);
+				  break;
+			  }
+			}
+			tilesDiv.appendChild(newLabel);
+			tilesBreak = document.createElement("br");
+			tilesDiv.appendChild(tilesBreak);
+			return;
+		  default:
+			alert(http.responseText);
+			return;
+		}
+	  }
+	};
+  }
 
-    function loadLen() {
-      const http = new XMLHttpRequest();
-      http.open("GET", "/get-current-word-len");
-      http.onreadystatechange = (e) => {
-        if (http.readyState === XMLHttpRequest.DONE) {
-          var status = http.status;
+  function loadLen() {
+	const http = new XMLHttpRequest();
+	http.open("GET", "/get-current-word-len");
+	http.onreadystatechange = (e) => {
+	  if (http.readyState === XMLHttpRequest.DONE) {
+		var status = http.status;
 
-          if (status !== 200) {
-            console.log("some error happened", http.status);
-            alert("Error loading the game!");
-            return;
-          }
+		if (status !== 200) {
+		  console.log("some error happened", http.status);
+		  alert("Error loading the game!");
+		  return;
+		}
 
-          var jsonResponse = JSON.parse(http.responseText);
-          var lengthLabel = document.getElementById("lengthLabel");
-          lengthLabel.innerText = jsonResponse.Length;
-        }
-      };
-      http.send();
-    }
+		var jsonResponse = JSON.parse(http.responseText);
+		var lengthLabel = document.getElementById("lengthLabel");
+		lengthLabel.innerText = jsonResponse.Length;
+	  }
+	};
+	http.send();
+  }
 
-    window.onload = loadLen();
-  </script>
+  window.onload = loadLen();
+</script>
 </html>
 `
