@@ -76,6 +76,10 @@ func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(&w, r)
+	if (*r).Method == "OPTIONS" {
+		return
+	}
 	var letters []string
 	err := json.NewDecoder(r.Body).Decode(&letters)
 	if err != nil {
@@ -104,6 +108,7 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	w.Header().Set("Content-Type", "application/json")
 
 	if allMatched {
 		w.WriteHeader(http.StatusAccepted)
@@ -141,6 +146,12 @@ func splitWordGetLetters(word string) ([]string, error) {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
+}
+
+func enableCORS(w *http.ResponseWriter, req *http.Request) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }
 
 func main() {
