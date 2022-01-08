@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" lang="ta" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tamil Wordle</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css"
+    />
+    <!-- jQuery Dependency -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <!-- Keybaord Styling -->
+    <link
+      href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/themes/ui-lightness/jquery-ui.css"
+      rel="stylesheet"
+    />
+    <!-- keyboard position -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script>
+
+    <!-- keyboard widget css & script -->
+    <link href="./static/Keyboard-master/css/keyboard.css" rel="stylesheet" />
+    <script src="./static/Keyboard-master/js/jquery.keyboard.js"></script>
+    <script src="./static/Keyboard-master/js/jquery.keyboard.extension-mobile.js"></script>
+    <script src="./static/Keyboard-master/layouts/tamil.js"></script>
+    <script src="./static/Keyboard-master/layouts/ms-Tamil.js"></script>
+
+    <!-- css for the preview keyset extension -->
+    <link href="css/keyboard-previewkeyset.css" rel="stylesheet" />
+
+    <style>
+      .letter-box {
+        font-size: 2rem;
+        border: 2px solid #dbdbdb;
+        width: 64px;
+        height: 64px;
+        text-align: center;
+        margin-left: 0.75rem;
+        color: #222;
+      }
+      .b-dark {
+        border-color: #888;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container" style="max-width: 640px">
+      <section class="section">
+        <div class="title has-text-centered">
+          <span id="lengthLabel"></span> எழுத்துச்சொல்
+        </div>
+        <div
+          class="notification is-danger"
+          id="error"
+          style="display: none"
+        ></div>
+        <div id="input-box" class="my-3">
+          <input
+            id="keyboard"
+            class="input is-large keyboard-init-focus"
+            type="text"
+          />
+        </div>
+        <div class="buttons">
+          <button class="button is-primary is-fullwidth" onclick="process()">
+            சரிபார்
+          </button>
+        </div>
+      </section>
+      <div id="historyDiv"></div>
+    </div>
+
+    <div class="modal" id="result-modal">
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title has-text-centered">
+              🎉️ வாழ்த்துகள்! சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள் 🎊️
+            </p>
+          </header>
+          <div class="card-content">
+            <p class="has-text-centered">உங்களின் முயற்சி வரலாறு</p>
+            <div id="full-history" class="has-text-centered" class="my-3"></div>
+          </div>
+          <footer class="card-footer">
+            <a href="#" id="share" class="card-footer-item">📣️ Share</a>
+          </footer>
+        </div>
+      </div>
+      <button class="modal-close is-large" aria-label="close"></button>
+    </div>
+  </body>
+
+  <script src="./static/main.js"></script>
+</html>
