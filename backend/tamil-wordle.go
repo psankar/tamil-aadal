@@ -16,6 +16,9 @@ const (
 	LetterNotFound  = "LETTER_NOT_FOUND"
 )
 
+// Allowed Origins for CORS requests, initialized in init
+var allowedOrigins map[string]bool
+
 var todayLetters []string
 var todayLettersMap map[string]struct{}
 var isDiacritic map[rune]struct{}
@@ -56,6 +59,14 @@ func init() {
 		log.Fatal(err)
 		return
 	}
+
+	// initialize allowed origins
+	allowedOrigins = map[string]bool{
+		"https://tamil-wordle.local.vercel.app":        true,
+		"https://tamil-wordle.vercel.app":              true,
+		"https://tamil-wordle-tsureshkumar.vercel.app": true,
+		"https://tecoholic.github.io":                  true,
+	}
 }
 
 type CurrentWordLenResponse struct {
@@ -76,8 +87,8 @@ func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
-	enableCORS(&w, r)
-	if (*r).Method == "OPTIONS" {
+	enableCORS(w, r, r.Header.Get("Origin"))
+	if r.Method == "OPTIONS" {
 		return
 	}
 	var letters []string
@@ -148,10 +159,12 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
-func enableCORS(w *http.ResponseWriter, req *http.Request) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+func enableCORS(w http.ResponseWriter, req *http.Request, origin string) {
+	if allowedOrigins[origin] {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	}
 }
 
 func main() {
