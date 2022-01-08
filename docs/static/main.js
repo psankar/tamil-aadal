@@ -11,10 +11,6 @@ $("#keyboard").keyboard({
   layout: "tamil-tamil99-mod",
   autoAccept: true,
   initialFocus: false,
-  change: function (e) {
-    console.log($("#keyboard"));
-    console.log(convertToLetters($("#keyboard").val().trim()));
-  },
 });
 
 /**
