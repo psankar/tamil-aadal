@@ -47,6 +47,12 @@ function convertToLetters(word) {
   return targetList;
 }
 
+/**
+ * Uses the response from the server to populate the UI
+ *
+ * @param {array} letters Array of string - equivalent to Tamil Letters
+ * @param {XMLHttpRequest} http HTTP request object with responseText
+ */
 function updateResults(letters, http) {
   var status = JSON.parse(http.responseText);
   var box = {
@@ -147,7 +153,7 @@ function init() {
 
       if (status !== 200) {
         console.log("some error happened", http.status);
-        $("#error").text("Error loading the game!").show();
+        showError("Error loading the game!");
         return;
       }
 
