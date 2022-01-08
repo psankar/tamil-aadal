@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+    padding: 0;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans,
+        Helvetica Neue, sans-serif;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.g1 {
+    @apply grid grid-cols-1 gap-2 overflow-auto max-h-56;
+}
+.g2 {
+    @apply grid grid-cols-2 gap-2 overflow-auto max-h-56;
+}
+.g3 {
+    @apply grid grid-cols-3 gap-2 overflow-auto max-h-56;
+}
+.g4 {
+    @apply grid grid-cols-4 gap-2 overflow-auto max-h-56;
+}
+.g5 {
+    @apply grid grid-cols-5 gap-2 overflow-auto max-h-56;
+}
+.g6 {
+    @apply grid grid-cols-6 gap-2 overflow-auto max-h-56;
+}
+.g7 {
+    @apply grid grid-cols-7 gap-2 overflow-auto max-h-56;
+}
+.g8 {
+    @apply grid grid-cols-8 gap-2 overflow-auto max-h-56;
+}
+.g9 {
+    @apply grid grid-cols-9 gap-2 overflow-auto max-h-56;
+}
+.g10 {
+    @apply grid grid-cols-10 gap-2 overflow-auto max-h-56;
+}
+
+.tile-gray {
+    @apply rounded bg-gray-300 p-1;
+    text-align: center;
+}
+.tile-indigo {
+    @apply rounded bg-indigo-300 p-1;
+}
+
+.tile-jumbled {
+    @apply rounded bg-yellow-300 p-1;
+    text-align: center;
+}
+.tile-correct {
+    @apply rounded bg-green-300 p-1;
+    text-align: center;
+}
+.tile-notthere {
+    @apply rounded bg-gray-600 p-1 text-slate-400;
+    text-align: center;
+}
+
+.tile-blue {
+    @apply rounded bg-blue-300 p-1;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.9);
+}
