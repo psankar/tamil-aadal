@@ -67,11 +67,8 @@ function renderWorkarea() {
     var _class = "letter-box" + (letters[i] ? " b-dark" : "");
     workarea.append(`<div class="${_class}">${letters[i] || ""}</div>`);
   }
-  workarea[0].scrollIntoView({ behaviour: "smooth", block: "end" });
   if (letters.length === APP.wordLength) {
-    $("#verify-button")
-      .show()[0]
-      .scrollIntoView({ behaviour: "smooth", block: "end" });
+    $("#verify-button").show();
   } else {
     $("#verify-button").hide();
   }
