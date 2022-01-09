@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" lang="ta" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tamil Wordle</title>
+    <title>தமிழ் வோர்டில்</title>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css"
@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <!-- keyboard position -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script>
+    <!--script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script-->
 
     <!-- keyboard widget css & script -->
     <link href="./static/Keyboard-master/css/keyboard.css" rel="stylesheet" />
@@ -29,7 +29,7 @@
       .letter-box {
         font-size: 2rem;
         border: 2px solid #dbdbdb;
-        width: 64px;
+        min-width: 64px;
         height: 64px;
         text-align: center;
         margin-left: 0.75rem;
@@ -68,38 +68,64 @@
         opacity: 0;
       }
       #keyboard-container {
-        bottom: 0;
-        position: absolute;
+        height: 212px;
         width: 100%;
+      }
+      .ui-keyboard {
+        position: relative;
+        margin-top: -24px;
       }
     </style>
   </head>
 
   <body>
-    <div class="container" style="max-width: 640px; height: 100vh">
-      <section class="section">
-        <div class="title has-text-centered">
-          <span id="lengthLabel"></span> எழுத்துச்சொல்
+    <div class="container" style="max-width: 640px">
+      <div
+        class="is-flex is-flex-direction-column is-justify-content-space-between"
+        style="height: 100vh"
+      >
+        <div id="top">
+          <nav
+            class="navbar"
+            role="navigation"
+            aria-label="main navigation"
+            style="border-bottom: 1px solid #dbdbdb"
+          >
+            <div class="navbar-brand" style="margin-left: 0">
+              <span class="p-3 pt-4 is-size-6">
+                <strong>தமிழ் வோர்டில்</strong>
+              </span>
+            </div>
+          </nav>
+
+          <div
+            id="content-area"
+            style="overflow-y: scroll; height: calc(100vw - 340px)"
+          >
+            <div
+              class="notification is-danger"
+              id="error"
+              style="display: none"
+            ></div>
+            <div id="historyDiv"></div>
+            <div
+              id="workarea"
+              class="is-flex is-justify-content-center my-2"
+            ></div>
+            <div class="buttons">
+              <button
+                class="button is-primary mx-auto is-large"
+                id="verify-button"
+                onclick="process();"
+              >
+                சரிபார்
+              </button>
+            </div>
+          </div>
         </div>
-        <div
-          class="notification is-danger"
-          id="error"
-          style="display: none"
-        ></div>
-      </section>
-      <div id="historyDiv"></div>
-      <div id="workarea" class="is-flex is-justify-content-center my-2"></div>
-      <div class="buttons">
-        <button
-          class="button is-primary mx-auto is-large"
-          id="verify-button"
-          onclick="process();"
-        >
-          சரிபார்
-        </button>
-      </div>
-      <div id="keyboard-container">
-        <input id="keyboard" class="pseudo-input-box" type="text" />
+        <div id="keyboard-container">
+          <input id="keyboard" class="pseudo-input-box" type="text" />
+        </div>
       </div>
     </div>
 
@@ -108,8 +134,10 @@
       <div class="modal-content">
         <div class="card">
           <header class="card-header">
-            <p class="card-header-title has-text-centered">
-              🎉️ வாழ்த்துகள்! சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள் 🎊️
+            <p class="card-header-title">
+              <span class="has-text-centered mx-auto">
+                🎉️ வாழ்த்துகள்! சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள் 🎊️
+              </span>
             </p>
           </header>
           <div class="card-content">
@@ -117,7 +145,7 @@
             <div id="full-history" class="has-text-centered" class="my-3"></div>
           </div>
           <footer class="card-footer">
-            <a href="#" id="share" class="card-footer-item">📣️ Share</a>
+            <a href="#" id="share" class="card-footer-item">📣️ பகிர்</a>
           </footer>
         </div>
       </div>

@@ -29,6 +29,7 @@ function initKeyboard() {
     layout: "tamil-tamil99-mod",
     autoAccept: true,
     alwaysOpen: true,
+    appendTo: "#keyboard-container",
     change: function () {
       renderWorkarea();
     },
@@ -45,21 +46,34 @@ function convertToLetters(word) {
   var targetList = [];
   for (var i = 0; i != word.length; i++) {
     var ch = word[i];
-    diacritics[ch]
+    diacritics[ch] && targetList[targetList.length - 1].length < 2
       ? (targetList[targetList.length - 1] += ch)
       : targetList.push(ch);
   }
   return targetList;
 }
 
+/**
+ * Renders the boxes which will show the typing results
+ */
 function renderWorkarea() {
   var word = $("#keyboard").val();
-  var letters = convertToLetters(word);
+  var letters = convertToLetters(word).slice(0, APP.wordLength);
+  $("#keyboard").val(letters.join(""));
   var workarea = $("#workarea");
   workarea.empty();
+
   for (var i = 0; i < APP.wordLength; i++) {
     var _class = "letter-box" + (letters[i] ? " b-dark" : "");
     workarea.append(`<div class="${_class}">${letters[i] || ""}</div>`);
+  }
+  workarea[0].scrollIntoView({ behaviour: "smooth", block: "end" });
+  if (letters.length === APP.wordLength) {
+    $("#verify-button")
+      .show()[0]
+      .scrollIntoView({ behaviour: "smooth", block: "end" });
+  } else {
+    $("#verify-button").hide();
   }
 }
 
@@ -69,7 +83,7 @@ function renderWorkarea() {
  * @param {array} letters Array of string - equivalent to Tamil Letters
  * @param {XMLHttpRequest} http HTTP request object with responseText
  */
-function updateResults(letters, status) {
+function updateResults(letters, status, success) {
   var box = {
     LETTER_NOT_FOUND: "⚫",
     LETTER_ELSEWHERE: "🟡",
@@ -100,7 +114,11 @@ function updateResults(letters, status) {
 
   $("#historyDiv").append(historyItem);
   $("#keyboard").val("");
-  renderWorkarea();
+  if (success) {
+    showSuccess();
+  } else {
+    renderWorkarea();
+  }
 }
 
 function showError(message) {
@@ -117,8 +135,9 @@ function showSuccess() {
  * Processes the value in the Input Box
  */
 function process() {
+  $("#error").hide();
   var word = $("#keyboard").val();
-  var letters = convertToLetters(word);
+  var letters = convertToLetters(word).slice(0, APP.wordLength);
   $.ajax({
     method: "POST",
     url: "https://tamilwordle-maleycpqdq-el.a.run.app/verify-word",
@@ -128,9 +147,11 @@ function process() {
     success: function (data, status, xhr) {
       switch (xhr.status) {
         case 202:
-          APP.history.push("🟢".repeat(APP.wordLength));
-          store.setItem("historyBlocks", JSON.stringify(APP.history));
-          showSuccess();
+          updateResults(
+            letters,
+            Array(APP.wordLength).fill("LETTER_MATCHED"),
+            true
+          );
           return;
         case 200:
           updateResults(letters, JSON.parse(data));
@@ -141,17 +162,17 @@ function process() {
       }
     },
   }).fail(function () {
-    showError("Failed to check your word.");
+    showError("வார்த்தையைச் சரி பார்க்க முடியவில்லை");
+    renderWorkarea();
   });
   $("#keybaord").val("");
+  $("#verify-button").hide();
 }
 
 /**
  * Initialize the application
  */
 function init() {
-  $("#lengthLabel").text(APP.wordLength);
-
   // See if the game has already been played today
   // If it is already there, just show the success dialog
   if (store.getItem("successdate") === new Date().toDateString()) {
@@ -160,6 +181,7 @@ function init() {
     return;
   }
   initKeyboard();
+  $("#verify-button").hide();
 
   $.ajax({
     url: "https://tamilwordle-maleycpqdq-el.a.run.app/get-current-word-len",
@@ -180,17 +202,19 @@ function init() {
   });
 }
 
-/**
- * Close button clicked on Modal
- */
+// Check for click events on the navbar burger icon
+$(".navbar-burger").click(function () {
+  // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+  $(".navbar-burger").toggleClass("is-active");
+  $(".navbar-menu").toggleClass("is-active");
+});
 
+//Close button clicked on Modal
 $(".modal-close").click(function () {
   $(".modal").removeClass("is-active");
 });
 
-/**
- * Share Button clicked on Modal
- */
+// Share Button clicked on Modal
 $("#share").click(function () {
   var d = new Date();
   var text =
