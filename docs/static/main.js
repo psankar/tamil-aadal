@@ -193,7 +193,10 @@ $(".modal-close").click(function () {
  * Share Button clicked on Modal
  */
 $("#share").click(function () {
-  var text = "தமிழ் வோர்டில்\n\n" + APP.history.join("\n");
+  var d = new Date();
+  var text =
+    `தமிழ் வோர்டில் (${d.getDate()}/${d.getMonth() + 1})\n\n` +
+    APP.history.join("\n");
   if (navigator.share) {
     navigator.share({ text });
   } else {
