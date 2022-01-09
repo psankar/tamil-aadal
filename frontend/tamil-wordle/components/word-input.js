@@ -11,7 +11,7 @@ export function Input({ word_length, onNewGuess, checkDuplicate }) {
 
     function validate(e) {
         e.preventDefault();
-        if (word.unicodeLength() != word_length) {
+        if (_.trim(word, " ").unicodeLength() != word_length) {
             updateMsg(IntlMsg.msg_invalid_length);
         } else if (checkDuplicate(word)) {
             updateMsg(IntlMsg.msg_duplicate);
