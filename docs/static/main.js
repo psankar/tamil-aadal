@@ -30,6 +30,7 @@ function initKeyboard() {
     autoAccept: true,
     alwaysOpen: true,
     appendTo: "#keyboard-container",
+    keyBinding: "mousedown touchstart",
     change: function () {
       renderWorkarea();
     },
