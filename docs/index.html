@@ -10,79 +10,40 @@
     />
     <!-- jQuery Dependency -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
-    <!-- Keybaord Styling -->
-    <link
-      href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/themes/ui-lightness/jquery-ui.css"
-      rel="stylesheet"
-    />
-    <!-- keyboard position -->
-    <!--script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script-->
-
-    <!-- keyboard widget css & script -->
-    <link href="./static/Keyboard-master/css/keyboard.css" rel="stylesheet" />
-    <script src="./static/Keyboard-master/js/jquery.keyboard.js"></script>
-    <script src="./static/Keyboard-master/js/jquery.keyboard.extension-mobile.js"></script>
-    <script src="./static/Keyboard-master/layouts/tamil.js"></script>
-    <script src="./static/Keyboard-master/layouts/ms-Tamil.js"></script>
-
     <style>
       .letter-box {
-        font-size: 2rem;
+        font-size: 1.2rem;
         border: 2px solid #dbdbdb;
-        min-width: 64px;
-        height: 64px;
+        min-width: 48px;
+        height: 48px;
         text-align: center;
-        margin-left: 0.75rem;
+        margin-left: 0.5rem;
         color: #222;
+        line-height: 48px;
+      }
+
+      @media (min-width: 25rem) {
+        .letter-box {
+          font-size: 2rem;
+          border: 2px solid #dbdbdb;
+          min-width: 64px;
+          height: 64px;
+          text-align: center;
+          margin-left: 0.75rem;
+          color: #222;
+        }
       }
       .b-dark {
         border-color: #888;
-      }
-      .ui-keyboard-enter {
-        display: none;
-      }
-      .ui-keyboard-accept {
-        display: none;
-      }
-      .ui-keyboard-alt {
-        display: none;
-      }
-      .ui-keyboard-tab {
-        display: none;
-      }
-      .ui-keyboard-cancel {
-        display: none;
-      }
-      .ui-keyboard-space {
-        display: none;
-      }
-      .ui-keyboard-46 {
-        display: none;
-      }
-      .ui-keyboard-44 {
-        display: none;
-      }
-      .pseudo-input-box {
-        height: 0px;
-        width: 100%;
-        opacity: 0;
-      }
-      #keyboard-container {
-        height: 212px;
-        width: 100%;
-      }
-      .ui-keyboard {
-        position: relative;
-        margin-top: -24px;
       }
     </style>
   </head>
 
   <body>
-    <div class="container" style="max-width: 640px">
+    <div class="container" style="max-width: 640px; min-height: 100%">
       <div
         class="is-flex is-flex-direction-column is-justify-content-space-between"
-        style="height: 100vh"
+        style="min-height: 90vh"
       >
         <div id="top">
           <div class="my-2 p-3" style="border-bottom: 1px solid #dbdbdb">
@@ -99,9 +60,19 @@
               id="workarea"
               class="is-flex is-justify-content-center my-2"
             ></div>
+          </div>
+        </div>
+        <div class="px-2">
+          <label for="keyboard" class="label">
+            உங்கள் யூகத்தை தட்டச்சிடவும்
+          </label>
+          <div class="is-flex">
+            <div class="is-half">
+              <input id="keyboard" class="input is-large" type="text" />
+            </div>
             <div class="buttons">
               <button
-                class="button is-primary mx-auto is-large"
+                class="button is-primary is-large"
                 id="verify-button"
                 onclick="process();"
               >
@@ -109,9 +80,6 @@
               </button>
             </div>
           </div>
-        </div>
-        <div id="keyboard-container">
-          <input id="keyboard" class="pseudo-input-box" type="text" />
         </div>
       </div>
     </div>

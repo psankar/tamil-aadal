@@ -19,25 +19,6 @@ var diacritics = {
 };
 
 /**
- * Mottie Keyboard related stuff
- *
- * */
-function initKeyboard() {
-  $("#keyboard").val("");
-  $("#keyboard").keyboard({
-    usePreview: false,
-    layout: "tamil-tamil99-mod",
-    autoAccept: true,
-    alwaysOpen: true,
-    appendTo: "#keyboard-container",
-    keyBinding: "mousedown touchstart",
-    change: function () {
-      renderWorkarea();
-    },
-  });
-}
-
-/**
  * Convert a string into an array of strings representing Tamil letters
  *
  * @param {string} word String containing the word to convert to letters
@@ -70,8 +51,6 @@ function renderWorkarea() {
   }
   if (letters.length === APP.wordLength) {
     $("#verify-button").show();
-  } else {
-    $("#verify-button").hide();
   }
 }
 
@@ -127,6 +106,7 @@ function showSuccess() {
   $("#full-history").html(APP.history.join("<br/>"));
   $("#result-modal").addClass("is-active");
   store.setItem("successdate", new Date().toDateString());
+  $("verify-button").hide();
 }
 
 /**
@@ -164,7 +144,6 @@ function process() {
     renderWorkarea();
   });
   $("#keybaord").val("");
-  $("#verify-button").hide();
 }
 
 /**
@@ -178,8 +157,6 @@ function init() {
     showSuccess();
     return;
   }
-  initKeyboard();
-  $("#verify-button").hide();
 
   $.ajax({
     url: "https://tamilwordle-maleycpqdq-el.a.run.app/get-current-word-len",
@@ -190,9 +167,6 @@ function init() {
       for (var i = 0; i < APP.wordLength; i++) {
         workarea.append(`<div class="letter-box"></div>`);
       }
-      $("#verify-button").css({
-        width: (64 + 4) * APP.wordLength + 0.75 * (APP.wordLength - 1) + "px",
-      });
     },
   }).fail(function () {
     console.log("some error happened", http.status);
@@ -224,6 +198,10 @@ $("#share").click(function () {
     navigator.clipboard.writeText(text);
     alert("Content copied to clipboard");
   }
+});
+
+$("#keyboard").keydown(function () {
+  setTimeout(renderWorkarea, 300);
 });
 
 window.onload = init();
