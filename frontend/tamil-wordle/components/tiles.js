@@ -10,6 +10,7 @@ export function Tile({ letter, color, isResult = false }) {
 
 export function Tiles({ words, word_length, isResult = false, heading = true }) {
     const divEl = useRef(null);
+    const resultTilesPreRef = useRef(null);
     let wordTiles = [];
     if (!isResult && heading) {
         for (let i = 1; i <= word_length; i++) {
@@ -41,17 +42,50 @@ export function Tiles({ words, word_length, isResult = false, heading = true }) 
             divEl.current.scrollTop = divEl.current.scrollHeight;
         }
     });
+
+    let shareText = "";
+    if (isResult) {
+        let tileMatrix = _.join(
+            _.map(_.chunk(wordTiles, word_length), (x) => _.join(x, "")),
+            "\n"
+        );
+        shareText = `Tamil Wordle (${words.length} tries)\n${tileMatrix}`;
+    }
+
+    async function OnCopyClick() {
+        await navigator.clipboard.writeText(shareText);
+        alert(`Copied to clipboard! Use your favourite tool to share!\n\n${shareText}`);
+    }
+    async function onShareClick() {
+        if (navigator.share) {
+            await navigator.share(shareText);
+        } else {
+            await OnCopyClick();
+        }
+    }
+
     let st = "g" + word_length;
     return !isResult ? (
         <div className={st} ref={divEl}>
             {wordTiles}
         </div>
     ) : (
-        <pre>
-            {_.join(
-                _.map(_.chunk(wordTiles, word_length), (x) => _.join(x, "")),
-                "\n"
-            )}
-        </pre>
+        <div ref={resultTilesPreRef} className="space-x-2">
+            <pre>{shareText}</pre>
+            <button
+                className="rounded bg-green-300 p-1 text-blue-800 hover:bg-green-500"
+                onClick={(e) => OnCopyClick()}
+            >
+                Copy
+            </button>
+            {navigator.share ? (
+                <button
+                    className="rounded bg-green-300 p-1 text-blue-800 hover:bg-green-500"
+                    onClick={(e) => onShareClick()}
+                >
+                    Share
+                </button>
+            ) : null}
+        </div>
     );
 }
