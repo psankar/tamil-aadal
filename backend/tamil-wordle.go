@@ -67,6 +67,8 @@ func getWordForToday() string {
 }
 
 func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(&w, r)
+
 	err := json.NewEncoder(w).Encode(CurrentWordLenResponse{len(todayLetters)})
 	if err != nil {
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
