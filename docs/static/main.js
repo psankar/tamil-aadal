@@ -127,7 +127,7 @@ function process() {
     success: function (data, status, xhr) {
       switch (xhr.status) {
         case 202:
-          APP.history.push("🟩".repeat(APP.wordLength));
+          APP.history.push("🟢".repeat(APP.wordLength));
           store.setItem("historyBlocks", JSON.stringify(APP.history));
           showSuccess();
           return;
