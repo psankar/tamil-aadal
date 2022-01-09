@@ -110,6 +110,7 @@ function showError(message) {
 function showSuccess() {
   $("#full-history").html(APP.history.join("<br/>"));
   $("#result-modal").addClass("is-active");
+  store.setItem("successdate", new Date().toDateString());
 }
 
 /**
@@ -153,13 +154,11 @@ function init() {
 
   // See if the game has already been played today
   // If it is already there, just show the success dialog
-  var lastDate = store.getItem("date");
-  if (lastDate === new Date().toDateString()) {
+  if (store.getItem("successdate") === new Date().toDateString()) {
     APP.history = JSON.parse(store.getItem("historyBlocks"));
     showSuccess();
     return;
   }
-  store.setItem("date", new Date().toDateString());
   initKeyboard();
 
   $.ajax({
