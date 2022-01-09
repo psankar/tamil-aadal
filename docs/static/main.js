@@ -56,9 +56,9 @@ function convertToLetters(word) {
 function updateResults(letters, http) {
   var status = JSON.parse(http.responseText);
   var box = {
-    LETTER_NOT_FOUND: "⬜",
-    LETTER_ELSEWHERE: "🟨",
-    LETTER_MATCHED: "🟩",
+    LETTER_NOT_FOUND: "⚫",
+    LETTER_ELSEWHERE: "🟡",
+    LETTER_MATCHED: "🟢",
   };
 
   var statusItem = "";
