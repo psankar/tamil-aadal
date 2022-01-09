@@ -153,7 +153,7 @@ function init() {
 
   // See if the game has already been played today
   // If it is already there, just show the success dialog
-  var lastDate = new Date().toDateString();
+  var lastDate = store.getItem("date");
   if (lastDate === new Date().toDateString()) {
     APP.history = JSON.parse(store.getItem("historyBlocks"));
     showSuccess();
