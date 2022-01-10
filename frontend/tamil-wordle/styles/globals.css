@@ -87,3 +87,13 @@ a {
   color: white;
   background-color: rgba(0, 0, 0, 1);
 }
+
+.alert-error {
+    @apply bg-red-200 rounded-lg py-5 px-6 mb-3 text-base text-yellow-700 inline-flex items-center w-full ;
+}
+.alert-warning {
+    @apply bg-yellow-100 rounded-lg py-5 px-6 mb-3 text-base text-yellow-700 inline-flex items-center w-full ;
+}
+.alert-info {
+    @apply bg-green-100 rounded-lg py-5 px-6 mb-3 text-base text-yellow-700 inline-flex items-center w-full ;
+}

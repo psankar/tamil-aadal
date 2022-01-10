@@ -13,6 +13,7 @@ import { Help } from "../components/help-page";
 import { Input } from "../components/word-input";
 import { Tile, Tiles } from "../components/tiles";
 import { UsedLetters } from "../components/used-letters";
+import { Alert } from "../components/alert";
 
 import { useState, useRef, useEffect } from "react";
 
@@ -32,6 +33,8 @@ export default function Home({ word_length, server, error }) {
         words: [], // [{word, status}]
     }); // {word, result}
     let [showModal, updateShowModal] = useState(false);
+    let [alert, updateAlert] = useState({msg: "", show: false, status: "error"});
+    let showAlert = (status, msg) => updateAlert({...alert, msg: msg +"", status, show: true});
 
     function checkDuplicate(word) {
         return _.find(gameState.words, (x) => x.word === word) !== undefined;
@@ -69,6 +72,7 @@ export default function Home({ word_length, server, error }) {
                 onGameOver();
             }
         } catch (error) {
+            showAlert("error", error);
             console.error(error);
         }
     }
@@ -95,6 +99,8 @@ export default function Home({ word_length, server, error }) {
                                 </a>
                             </div>
                         </div>
+                        <Alert msg={alert.msg} status={alert.status} show={alert.show} onHide={() => updateAlert({...alert, show: false})}/>
+                        
                         {error ? (
                             <div className="rounded bg-pink-300 bold">{error}</div>
                         ) : (
