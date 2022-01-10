@@ -1,5 +1,5 @@
 import React from "react";
-import { FiHelpCircle } from "react-icons/fi";
+import { FiHelpCircle, FiSettings } from "react-icons/fi";
 
 function Header({ onShowInstructions }) {
   return (
@@ -10,16 +10,24 @@ function Header({ onShowInstructions }) {
     >
       <div className="py-2">
         <button
-          className="button is-ghost"
+          className="button is-white has-text-grey-light"
           onClick={() => onShowInstructions()}
         >
-          <FiHelpCircle />
+          <span className="icon">
+            <FiHelpCircle />
+          </span>
         </button>
       </div>
       <div className="my-3 px-3">
         <h1 className="is-size-6 has-text-weight-bold">தமிழ் வோர்டில்</h1>
       </div>
-      <div className="py-2"></div>
+      <div className="py-2">
+        <button className="button is-white has-text-grey-light">
+          <span className="icon">
+            <FiSettings />
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
