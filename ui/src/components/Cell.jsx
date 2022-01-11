@@ -1,6 +1,6 @@
 import React from "react";
 
-function Cell({ letter, status }) {
+function Cell({ letter, status, borderColor }) {
   let sclass;
   switch (status) {
     case "LETTER_ELSEWHERE":
@@ -16,7 +16,11 @@ function Cell({ letter, status }) {
       sclass = "";
       break;
   }
-  return <div className={`cell ${sclass}`}>{letter}</div>;
+  return (
+    <div className={`cell ${sclass}`} style={{ borderColor }}>
+      {letter}
+    </div>
+  );
 }
 
 export default Cell;

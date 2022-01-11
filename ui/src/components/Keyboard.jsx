@@ -9,12 +9,26 @@ function Keyboard({ onType }) {
   const [rowType, setRowType] = useState(ROWTYPE.MAIN);
   let rows = t99layout.rows;
   let altrows = t99layout.altrows;
+  const actionKeys = {
+    "\u2190": true, // backspace
+    "\u2191": true, // shift
+  };
 
   const handleType = (char) => {
-    !diacritics[char] && !vowels[char] && char !== "\u2190" && char !== ""
+    if (char === "\u2191") {
+      toggleLayout();
+      return;
+    }
+    !diacritics[char] && !vowels[char] && !actionKeys[char] && char !== ""
       ? setRowType(ROWTYPE.ALT)
       : setRowType(ROWTYPE.MAIN);
     onType(char);
+  };
+
+  const toggleLayout = () => {
+    ROWTYPE.MAIN === rowType
+      ? setRowType(ROWTYPE.ALT)
+      : setRowType(ROWTYPE.MAIN);
   };
 
   return (

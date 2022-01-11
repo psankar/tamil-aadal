@@ -1,14 +1,22 @@
 import React from "react";
-import { toTamilLetters } from "../utils";
 import Cell from "./Cell";
 
-function InputBoxes({ word, length }) {
-  let _l = toTamilLetters(word);
-  let letters = [...Array(length)].map((_, i) => _l[i] || "");
+function InputBoxes({ letters, length, highlightEmpty }) {
+  let fullarray = [...Array(length)].map((_, i) => letters[i] || "");
   return (
     <div className="is-flex is-justify-content-center">
-      {letters.map((l, i) => (
-        <Cell key={i} letter={l} />
+      {fullarray.map((l, i) => (
+        <Cell
+          key={i}
+          letter={l}
+          borderColor={
+            highlightEmpty && !l.length
+              ? "hsl(348, 100%, 61%)"
+              : l.length
+              ? "hsl(0, 0%, 29%)"
+              : "hsl(0, 0%, 86%)"
+          }
+        />
       ))}
     </div>
   );

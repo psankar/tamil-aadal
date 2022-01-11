@@ -6,6 +6,7 @@ import Workbench from "./components/Workbench";
 import Instructions from "./components/Instructions";
 import axios from "axios";
 import Keyboard from "./components/Keyboard";
+import { diacritics, toTamilLetters } from "./utils";
 
 function App() {
   const [hideInstructions, setHideInstructions] = useState(
@@ -13,6 +14,7 @@ function App() {
   );
   const [wordLength, setWordLength] = useState(5);
   const [lengthLoaded, setLengthLoaded] = useState(false);
+  const [currentWord, setCurrentWord] = useState("");
 
   useEffect(() => {
     if (!lengthLoaded) {
@@ -33,6 +35,22 @@ function App() {
     dbset("hideInstructions", hideInstructions);
   }, [hideInstructions]);
 
+  const typeChar = (c) => {
+    let letters = toTamilLetters(currentWord);
+
+    if (c === "\u2190") {
+      setCurrentWord(currentWord.slice(0, currentWord.length - 1));
+    } else if (
+      letters.length < wordLength ||
+      // last letter + a diacritic
+      (letters.length === wordLength &&
+        letters[letters.length - 1].length === 1 &&
+        diacritics[c])
+    ) {
+      setCurrentWord(currentWord + c);
+    }
+  };
+
   return (
     <div
       style={{ maxWidth: "600px" }}
@@ -41,12 +59,16 @@ function App() {
       <Header onShowInstructions={() => setHideInstructions(false)} />
       {!lengthLoaded ? <section className="section">Loading...</section> : null}
       {hideInstructions ? (
-        <Workbench length={wordLength} />
+        <Workbench
+          length={wordLength}
+          letters={toTamilLetters(currentWord)}
+          onVerified={() => setCurrentWord("")}
+        />
       ) : (
         <Instructions onHide={() => setHideInstructions(true)} />
       )}
 
-      <Keyboard onType={(c) => console.log(c)} />
+      <Keyboard onType={(c) => typeChar(c)} />
     </div>
   );
 }
