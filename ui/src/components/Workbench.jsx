@@ -6,7 +6,14 @@ import HistoryBoxes from "./HistoryBoxes";
 
 const historykey = new Date().toDateString().replace(/ /g, "-");
 
-function Workbench({ length, letters, blacklist, onVerified }) {
+function Workbench({
+  length,
+  letters,
+  complete,
+  blacklist,
+  onVerified,
+  onSuccess,
+}) {
   let oldhistory = dbget("guessHistory") || {};
   const [guesses, setGuesses] = useState(oldhistory[historykey] || []);
   const [highlightEmpty, setHighlightEmpty] = useState(false);
@@ -21,11 +28,17 @@ function Workbench({ length, letters, blacklist, onVerified }) {
       .post("https://tamilwordle-maleycpqdq-el.a.run.app/verify-word", letters)
       .then((res) => {
         let results = res.data;
-        setGuesses([...guesses, { letters, results }]);
-        let wrongLetters = letters.filter(
-          (l, i) => results[i] === "LETTER_NOT_FOUND"
-        );
-        onVerified({ wrongLetters });
+        if (res.status === 202) {
+          results = Array(length).fill("LETTER_MATCHED");
+          setGuesses([...guesses, { letters, results }]);
+          onSuccess();
+        } else {
+          setGuesses([...guesses, { letters, results }]);
+          let wrongLetters = letters.filter(
+            (l, i) => results[i] === "LETTER_NOT_FOUND"
+          );
+          onVerified({ wrongLetters });
+        }
       })
       .catch((e) => {
         console.log(e);
@@ -52,22 +65,24 @@ function Workbench({ length, letters, blacklist, onVerified }) {
           <HistoryBoxes key={i} guess={g} />
         ))}
       </div>
-      <div>
-        <InputBoxes
-          length={length}
-          letters={letters}
-          highlightEmpty={highlightEmpty}
-          blacklist={blacklist}
-        />
-        <div className="my-3 buttons">
-          <button
-            className="button is-primary mx-auto"
-            onClick={() => verify()}
-          >
-            சரிபார்
-          </button>
+      {!complete ? (
+        <div>
+          <InputBoxes
+            length={length}
+            letters={letters}
+            highlightEmpty={highlightEmpty}
+            blacklist={blacklist}
+          />
+          <div className="my-3 buttons">
+            <button
+              className="button is-primary mx-auto"
+              onClick={() => verify()}
+            >
+              சரிபார்
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

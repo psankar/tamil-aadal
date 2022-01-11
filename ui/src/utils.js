@@ -51,4 +51,5 @@ export const PAGES = {
   INSTRUCTIONS: "instructions",
   SETTINGS: "settings",
   WORKBENCH: "workbench",
+  SUCCESS: "success",
 };

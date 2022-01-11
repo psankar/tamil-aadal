@@ -9,13 +9,21 @@ import Keyboard from "./components/Keyboard";
 import { diacritics, toTamilLetters } from "./utils";
 import Settings from "./components/Settings";
 import { PAGES } from "./utils";
+import Success from "./components/Success";
 
 const defaultPreferences = {
   helperMode: true,
 };
 
 function App() {
-  const [currentPage, setCurrentPage] = useState(PAGES.INSTRUCTIONS);
+  const [succeeded, setSucceeded] = useState(
+    dbget("lastSuccess") === new Date().toDateString()
+  );
+  const [currentPage, setCurrentPage] = useState(
+    dbget("lastSuccess") === new Date().toDateString()
+      ? PAGES.SUCCESS
+      : PAGES.INSTRUCTIONS
+  );
   const [wordLength, setWordLength] = useState(5);
   const [lengthLoaded, setLengthLoaded] = useState(false);
   const [currentWord, setCurrentWord] = useState("");
@@ -69,6 +77,13 @@ function App() {
 
   useEffect(() => dbset("userPreferences", settings), [settings]);
 
+  const handleSuccess = () => {
+    setCurrentWord("");
+    setCurrentPage(PAGES.SUCCESS);
+    setSucceeded(true);
+    dbset("lastSuccess", new Date().toDateString());
+  };
+
   return (
     <div
       style={{ maxWidth: "600px" }}
@@ -84,11 +99,15 @@ function App() {
           onClose={() => setCurrentPage(PAGES.WORKBENCH)}
           onUpdate={onUpdateSettings}
         />
+      ) : currentPage === PAGES.SUCCESS ? (
+        <Success />
       ) : (
         <Workbench
           length={wordLength}
           letters={toTamilLetters(currentWord)}
+          complete={succeeded}
           onVerified={handleVerified}
+          onSuccess={handleSuccess}
           blacklist={settings.helperMode ? blacklist : new Set()}
         />
       )}

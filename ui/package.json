@@ -2,6 +2,7 @@
   "name": "ui",
   "version": "0.1.0",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "@react-spring/web": "^9.4.1",
     "@testing-library/jest-dom": "^5.16.1",
@@ -18,7 +19,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "BUILD_PATH='../docs' react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
