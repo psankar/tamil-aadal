@@ -8,6 +8,7 @@ body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans,
         Helvetica Neue, sans-serif;
+    @apply text-lg
 }
 
 a {
@@ -20,34 +21,34 @@ a {
 }
 
 .g1 {
-    @apply grid grid-cols-1 gap-2 overflow-auto max-h-56;
+    @apply grid grid-cols-1 gap-2 overflow-auto max-h-screen;
 }
 .g2 {
-    @apply grid grid-cols-2 gap-2 overflow-auto max-h-56;
+    @apply grid grid-cols-2 gap-2 overflow-auto max-h-screen;
 }
 .g3 {
-    @apply grid grid-cols-3 gap-2 overflow-auto max-h-56;
+    @apply grid grid-cols-3 gap-2 overflow-auto max-h-screen;
 }
 .g4 {
-    @apply grid grid-cols-4 gap-2 overflow-auto max-h-56;
+    @apply grid grid-cols-4 gap-2 overflow-auto max-h-screen;
 }
 .g5 {
-    @apply grid grid-cols-5 gap-2 overflow-auto max-h-56;
+    @apply grid grid-cols-5 gap-2 overflow-auto max-h-screen;
 }
 .g6 {
-    @apply grid grid-cols-6 gap-2 overflow-auto max-h-56;
+    @apply grid grid-cols-6 gap-2 overflow-auto max-h-screen;
 }
 .g7 {
-    @apply grid grid-cols-7 gap-2 overflow-auto max-h-56;
+    @apply grid grid-cols-7 gap-2 overflow-auto max-h-screen;
 }
 .g8 {
-    @apply grid grid-cols-8 gap-2 overflow-auto max-h-56;
+    @apply grid grid-cols-8 gap-2 overflow-auto max-h-screen;
 }
 .g9 {
-    @apply grid grid-cols-9 gap-2 overflow-auto max-h-56;
+    @apply grid grid-cols-9 gap-2 overflow-auto max-h-screen;
 }
 .g10 {
-    @apply grid grid-cols-10 gap-2 overflow-auto max-h-56;
+    @apply grid grid-cols-10 gap-2 overflow-auto max-h-screen;
 }
 
 .tile-gray {
