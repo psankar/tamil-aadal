@@ -1,6 +1,6 @@
 import React from "react";
 import Cell from "./Cell";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowRight } from "react-icons/fi";
 
 function Instructions({ onHide }) {
   return (
@@ -57,11 +57,11 @@ function Instructions({ onHide }) {
 
       <div className="buttons pt-4">
         <button
-          className="button mx-auto is-primary is-large has-text-weight-bold"
+          className="button mx-auto is-primary has-text-weight-bold"
           onClick={() => onHide()}
         >
-          <FiArrowLeft />
-          &nbsp;&nbsp;விளையாட்டு
+          விளையாட்டு&nbsp;&nbsp;
+          <FiArrowRight />
         </button>
       </div>
     </section>

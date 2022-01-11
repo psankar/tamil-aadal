@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { get as dbget, set as dbset } from "lockr";
+import { set as dbset, get as dbget } from "lockr";
 import "./App.css";
 import Header from "./components/Header";
 import Workbench from "./components/Workbench";
@@ -7,15 +7,24 @@ import Instructions from "./components/Instructions";
 import axios from "axios";
 import Keyboard from "./components/Keyboard";
 import { diacritics, toTamilLetters } from "./utils";
+import Settings from "./components/Settings";
+import { PAGES } from "./utils";
+
+const defaultPreferences = {
+  helperMode: true,
+};
 
 function App() {
-  const [hideInstructions, setHideInstructions] = useState(
-    dbget("hideInstructions")
-  );
+  const [currentPage, setCurrentPage] = useState(PAGES.INSTRUCTIONS);
   const [wordLength, setWordLength] = useState(5);
   const [lengthLoaded, setLengthLoaded] = useState(false);
   const [currentWord, setCurrentWord] = useState("");
   const [blacklist, setBlackList] = useState(new Set());
+  const [settings, setSettings] = useState(dbget("userPreferences"));
+  if (!settings) {
+    setSettings(defaultPreferences);
+    dbset("userPreferences", defaultPreferences);
+  }
 
   useEffect(() => {
     if (!lengthLoaded) {
@@ -31,10 +40,6 @@ function App() {
         });
     }
   }, [lengthLoaded]);
-
-  useEffect(() => {
-    dbset("hideInstructions", hideInstructions);
-  }, [hideInstructions]);
 
   const typeChar = (c) => {
     let letters = toTamilLetters(currentWord);
@@ -58,25 +63,38 @@ function App() {
     setBlackList(_black);
   };
 
+  const onUpdateSettings = (key, value) => {
+    setSettings({ ...settings, [key]: value });
+  };
+
+  useEffect(() => dbset("userPreferences", settings), [settings]);
+
   return (
     <div
       style={{ maxWidth: "600px" }}
       className="is-flex is-flex-direction-column mx-auto"
     >
-      <Header onShowInstructions={() => setHideInstructions(false)} />
+      <Header onShow={(page) => setCurrentPage(page)} />
       {!lengthLoaded ? <section className="section">Loading...</section> : null}
-      {hideInstructions ? (
+      {currentPage === PAGES.INSTRUCTIONS ? (
+        <Instructions onHide={() => setCurrentPage(PAGES.WORKBENCH)} />
+      ) : currentPage === PAGES.SETTINGS ? (
+        <Settings
+          settings={settings}
+          onClose={() => setCurrentPage(PAGES.WORKBENCH)}
+          onUpdate={onUpdateSettings}
+        />
+      ) : (
         <Workbench
           length={wordLength}
           letters={toTamilLetters(currentWord)}
           onVerified={handleVerified}
-          blacklist={blacklist}
+          blacklist={settings.helperMode ? blacklist : new Set()}
         />
-      ) : (
-        <Instructions onHide={() => setHideInstructions(true)} />
       )}
-
-      <Keyboard onType={(c) => typeChar(c)} blacklist={blacklist} />
+      {currentPage === PAGES.WORKBENCH ? (
+        <Keyboard onType={(c) => typeChar(c)} blacklist={blacklist} />
+      ) : null}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import React from "react";
 import { FiHelpCircle, FiSettings } from "react-icons/fi";
+import { PAGES } from "../utils";
 
-function Header({ onShowInstructions }) {
+function Header({ onShow }) {
   return (
     <div
       id="header"
@@ -11,7 +12,7 @@ function Header({ onShowInstructions }) {
       <div className="py-2">
         <button
           className="button is-white has-text-grey-light"
-          onClick={() => onShowInstructions()}
+          onClick={() => onShow(PAGES.INSTRUCTIONS)}
         >
           <span className="icon">
             <FiHelpCircle />
@@ -22,7 +23,10 @@ function Header({ onShowInstructions }) {
         <h1 className="is-size-6 has-text-weight-bold">தமிழ் வோர்டில்</h1>
       </div>
       <div className="py-2">
-        <button className="button is-white has-text-grey-light">
+        <button
+          className="button is-white has-text-grey-light"
+          onClick={() => onShow(PAGES.SETTINGS)}
+        >
           <span className="icon">
             <FiSettings />
           </span>

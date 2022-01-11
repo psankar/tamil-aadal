@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
+import { set as dbset, get as dbget } from "lockr";
 import InputBoxes from "./InputBoxes";
 import axios from "axios";
 import HistoryBoxes from "./HistoryBoxes";
 
+const historykey = new Date().toDateString().replace(/ /g, "-");
+
 function Workbench({ length, letters, blacklist, onVerified }) {
-  const [guesses, setGuesses] = useState([]);
+  let oldhistory = dbget("guessHistory") || {};
+  const [guesses, setGuesses] = useState(oldhistory[historykey] || []);
   const [highlightEmpty, setHighlightEmpty] = useState(false);
 
   const verify = () => {
@@ -33,6 +37,13 @@ function Workbench({ length, letters, blacklist, onVerified }) {
   useEffect(() => {
     setHighlightEmpty(false);
   }, [letters]);
+
+  // automatically save the guesses to localstorage
+  useEffect(() => {
+    let history = dbget("guessHistory") || {};
+    history[historykey] = guesses;
+    dbset("guessHistory", history);
+  }, [guesses]);
 
   return (
     <div className="is-flex is-flex-direction-column is-justify-content-between workbench">

@@ -46,3 +46,9 @@ export function toTamilLetters(word) {
   }
   return letters;
 }
+
+export const PAGES = {
+  INSTRUCTIONS: "instructions",
+  SETTINGS: "settings",
+  WORKBENCH: "workbench",
+};
