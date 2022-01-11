@@ -1,7 +1,7 @@
 import React from "react";
 import Cell from "./Cell";
 
-function InputBoxes({ letters, length, highlightEmpty }) {
+function InputBoxes({ letters, length, blacklist, highlightEmpty }) {
   let fullarray = [...Array(length)].map((_, i) => letters[i] || "");
   return (
     <div className="is-flex is-justify-content-center">
@@ -10,7 +10,9 @@ function InputBoxes({ letters, length, highlightEmpty }) {
           key={i}
           letter={l}
           borderColor={
-            highlightEmpty && !l.length
+            blacklist.has(l)
+              ? "hsl(48, 100%, 29%)"
+              : highlightEmpty && !l.length
               ? "hsl(348, 100%, 61%)"
               : l.length
               ? "hsl(0, 0%, 29%)"

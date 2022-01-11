@@ -15,6 +15,7 @@ function App() {
   const [wordLength, setWordLength] = useState(5);
   const [lengthLoaded, setLengthLoaded] = useState(false);
   const [currentWord, setCurrentWord] = useState("");
+  const [blacklist, setBlackList] = useState(new Set());
 
   useEffect(() => {
     if (!lengthLoaded) {
@@ -51,6 +52,12 @@ function App() {
     }
   };
 
+  const handleVerified = ({ wrongLetters }) => {
+    setCurrentWord("");
+    let _black = new Set(Array.from(blacklist).concat(wrongLetters));
+    setBlackList(_black);
+  };
+
   return (
     <div
       style={{ maxWidth: "600px" }}
@@ -62,13 +69,14 @@ function App() {
         <Workbench
           length={wordLength}
           letters={toTamilLetters(currentWord)}
-          onVerified={() => setCurrentWord("")}
+          onVerified={handleVerified}
+          blacklist={blacklist}
         />
       ) : (
         <Instructions onHide={() => setHideInstructions(true)} />
       )}
 
-      <Keyboard onType={(c) => typeChar(c)} />
+      <Keyboard onType={(c) => typeChar(c)} blacklist={blacklist} />
     </div>
   );
 }

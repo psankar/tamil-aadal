@@ -3,7 +3,7 @@ import InputBoxes from "./InputBoxes";
 import axios from "axios";
 import HistoryBoxes from "./HistoryBoxes";
 
-function Workbench({ length, letters, onVerified }) {
+function Workbench({ length, letters, blacklist, onVerified }) {
   const [guesses, setGuesses] = useState([]);
   const [highlightEmpty, setHighlightEmpty] = useState(false);
 
@@ -16,13 +16,17 @@ function Workbench({ length, letters, onVerified }) {
     axios
       .post("https://tamilwordle-maleycpqdq-el.a.run.app/verify-word", letters)
       .then((res) => {
-        setGuesses([...guesses, { letters, results: res.data }]);
+        let results = res.data;
+        setGuesses([...guesses, { letters, results }]);
+        let wrongLetters = letters.filter(
+          (l, i) => results[i] === "LETTER_NOT_FOUND"
+        );
+        onVerified({ wrongLetters });
       })
       .catch((e) => {
         console.log(e);
         alert("Error");
-      })
-      .finally(() => onVerified());
+      });
   };
 
   // reset red border when user starts to type again
@@ -42,6 +46,7 @@ function Workbench({ length, letters, onVerified }) {
           length={length}
           letters={letters}
           highlightEmpty={highlightEmpty}
+          blacklist={blacklist}
         />
         <div className="my-3 buttons">
           <button
