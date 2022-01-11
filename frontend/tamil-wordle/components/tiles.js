@@ -3,8 +3,8 @@ import ReactDOM from "react-dom";
 import { useState, useRef, useEffect } from "react";
 import * as UC from "../unicode-utils";
 
-export function Tile({ letter, color, isResult = false }) {
-    let st = `tile-${color}`;
+export function Tile({ letter, color, isResult = false, anim = "animate-none" }) {
+    let st = `tile-${color} ${anim}`;
     return <div className={st}>{isResult ? String.fromCodePoint(0x1f7e9) : letter}</div>;
 }
 
@@ -88,4 +88,60 @@ export function Tiles({ words, word_length, isResult = false, heading = true }) 
             ) : null}
         </div>
     );
+}
+
+function mapColor(status) {
+    let color = "unknown";
+    let anim = "animate-flip";
+    if (status === "LETTER_ELSEWHERE") {
+        color = "jumbled";
+        anim = "animate-bounce";
+    } else if (status === "LETTER_MATCHED") {
+        color = "correct";
+        anim = "animate-none";
+    } else if (status === "LETTER_NOT_FOUND") {
+        color = "notthere";
+        anim = "animate-focus";
+    } else if (status === "LETTER_UNKNOWN") {
+        color = "unknown";
+        anim = "animate-flip";
+    }
+    return { color, anim };
+}
+export function TilesHint({ word, word_length, status, letterStatus }) {
+    let hint = [];
+    let i = 0;
+    let order = { unknown: 0, notthere: 1, jumbled: 2, correct: 3 };
+    //console.log(word, status, letterStatus);
+    word.forUnicodeEach((x) => {
+        let color = "unknown";
+        let anim = "animate-flip";
+        if (status[i] === "LETTER_ELSEWHERE") {
+            color = "jumbled";
+            anim = "animate-bounce";
+        } else if (status[i] === "LETTER_MATCHED") {
+            color = "correct";
+            anim = "animate-none";
+        } else if (status[i] === "LETTER_NOT_FOUND") {
+            color = "notthere";
+            anim = "animate-focus";
+        } else if (status[i] === "LETTER_UNKNOWN") {
+            color = "unknown";
+            anim = "animate-flip";
+        }
+
+        if (letterStatus[x]) {
+            letterStatus[x].forEach((st) => {
+                let m = mapColor(st);
+                if (order[color] < order[m.color]) {
+                    color = m.color;
+                }
+            });
+        }
+
+        if (i < word_length) hint.push(<Tile letter={x} color={color} anim={anim} />);
+        i += 1;
+    });
+    let gl = `g${word_length}`;
+    return <div className={gl}>{hint}</div>;
 }
