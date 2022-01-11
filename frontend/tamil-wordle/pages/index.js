@@ -12,7 +12,6 @@ import { Success } from "../components/success-message";
 import { Help } from "../components/help-page";
 import { Input } from "../components/word-input";
 import { Tile, Tiles } from "../components/tiles";
-import { UsedLetters } from "../components/used-letters";
 import { Alert } from "../components/alert";
 
 import { useState, useRef, useEffect } from "react";
@@ -31,6 +30,7 @@ export default function Home({ word_length, server, error }) {
         over: false,
         word_length,
         words: [], // [{word, status}]
+        letterHint: {}, // {leter: [CORRECT, WRONG_PLACE, NOT THERE] for the given pos
     }); // {word, result}
     let [showModal, updateShowModal] = useState(false);
     let [alert, updateAlert] = useState({msg: "", show: false, status: "error"});
@@ -58,6 +58,25 @@ export default function Home({ word_length, server, error }) {
             if (res.status === 200) {
                 let data = await res.json();
                 gameState.words.push({ word: guess, result: data });
+                let pos = 0;
+                guess.forUnicodeEach(ch => {
+                    if(!gameState.letterHint[ch])
+                        gameState.letterHint[ch] = [];
+
+                    // update the hint
+                    let hint = gameState.letterHint[ch];
+                    if (hint.length < word_length) {
+                        for(let i=hint.length; i<word_length; i++)
+                            hint.push("LETTER_UNKNOWN");
+                    }
+                    if(hint[pos] === "LETTER_UNKNOWN") 
+                        hint[pos] = data[pos];
+                    if(data[pos] === "LETTER_NOT_FOUND") {
+                        hint.fill("LETTER_NOT_FOUND");
+                    }
+
+                    pos += 1;
+                });
                 updateGameState({ ...gameState });
             } else if (res.status === 202) {
                 let data = [];
@@ -113,6 +132,7 @@ export default function Home({ word_length, server, error }) {
                                         word_length={gameState.word_length}
                                         onNewGuess={onNewGuess}
                                         checkDuplicate={checkDuplicate}
+                                        letterStatus={gameState.letterHint}
                                         onGameOver
                                     />
                                 ) : (
@@ -125,7 +145,6 @@ export default function Home({ word_length, server, error }) {
                                         </button>
                                     </div>
                                 )}
-                                <UsedLetters />
                             </div>
                         )}
                         <Modal show={showModal} onClose={() => updateShowModal(false)}>

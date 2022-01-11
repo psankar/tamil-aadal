@@ -2,10 +2,11 @@ import ReactDOM from "react-dom";
 import { useState, useRef, useEffect } from "react";
 import * as _ from "lodash";
 import * as UC from "../unicode-utils";
+import { UsedLetters, LetterHint } from "../components/used-letters";
 
 import { IntlMsg } from "../messages-ta";
 
-export function Input({ word_length, onNewGuess, checkDuplicate }) {
+export function Input({ word_length, letterHint, onNewGuess, checkDuplicate, letterStatus }) {
     let [word, updateWord] = useState("");
     let [msg, updateMsg] = useState("");
 
@@ -46,6 +47,7 @@ export function Input({ word_length, onNewGuess, checkDuplicate }) {
                     {IntlMsg.btn_try}
                 </button>
             </div>
+            <LetterHint word_length={word_length} word={word} letterStatus={letterStatus}/>
         </div>
     );
 }

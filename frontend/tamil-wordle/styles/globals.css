@@ -58,6 +58,10 @@ a {
     @apply rounded bg-indigo-300 p-1;
 }
 
+.tile-unknown {
+    @apply rounded bg-pink-200 p-1;
+    text-align: center;
+}
 .tile-jumbled {
     @apply rounded bg-yellow-300 p-1;
     text-align: center;
@@ -96,4 +100,28 @@ a {
 }
 .alert-info {
     @apply bg-green-100 rounded-lg py-5 px-6 mb-3 text-base text-yellow-700 inline-flex items-center w-full ;
+}
+
+.animate-flip {
+    animation: flip 3s linear infinite;
+}
+@keyframes flip {
+    from {
+        transform: rotateY(0deg);
+    }
+    to {
+        transform: rotateY(350deg);
+    }
+}
+
+.animate-focus {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
 }
