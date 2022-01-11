@@ -14,6 +14,8 @@ const (
 	LetterMatched   = "LETTER_MATCHED"
 	LetterElseWhere = "LETTER_ELSEWHERE"
 	LetterNotFound  = "LETTER_NOT_FOUND"
+	UyirMatched     = "UYIR_MATCHED"
+	MeiMatched      = "MEI_MATCHED"
 )
 
 var todayLetters []string
@@ -106,6 +108,22 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 			if _, found := todayLettersMap[letters[i]]; found {
 				response = append(response, LetterElseWhere)
 			} else {
+				if letters[i][0] == todayLetters[i][0] && letters[i][1] == todayLetters[i][1] && letters[i][2] == todayLetters[i][2] {
+					response = append(response, MeiMatched)
+					continue
+				}
+
+				if len(todayLetters[i]) == 6 && len(letters[i]) == 6 {
+					if letters[i][3] == todayLetters[i][3] && letters[i][4] == todayLetters[i][4] && letters[i][5] == todayLetters[i][5] {
+						if letters[i][3] == 224 && letters[i][4] == 175 && letters[i][5] == 141 {
+							// Ignore \u0BCD
+							response = append(response, LetterNotFound)
+							continue
+						}
+						response = append(response, UyirMatched)
+						continue
+					}
+				}
 				response = append(response, LetterNotFound)
 			}
 		}
@@ -193,6 +211,8 @@ const htmlFile = `<html>
   <p>❤️ - சரியான எழுத்து</p>
   <p>&#128584; - இல்லாத எழுத்து, கடல்லையே இல்லையாம்</p>
   <p>&#128064; - தவறான இடத்தில் உள்ள சரியான எழுத்து</p>
+	<p>1️⃣ - சரியான இடத்தில் உள்ள உயிர் எழுத்து வரிசை</p>
+	<p>2️⃣ - சரியான இடத்தில் உள்ள மெய் எழுத்து வரிசை</p>
   <hr />
   <div id="tilesDiv"></div>
   <hr />
@@ -246,7 +266,8 @@ const htmlFile = `<html>
 			  newLabel.innerHTML += " ❤️ ";
 			}
 			tilesDiv.appendChild(newLabel);
-
+			tilesBreak = document.createElement("br");
+			tilesDiv.appendChild(tilesBreak);
 			return;
 		  case 200:
 			jsonResponse = JSON.parse(http.responseText);
@@ -273,6 +294,12 @@ const htmlFile = `<html>
 				case "LETTER_MATCHED":
 				  newLabel.innerHTML += " ❤️ ";
 				  break;
+				case "UYIR_MATCHED":
+					newLabel.innerHTML += " 1️⃣";
+					break;
+				case "MEI_MATCHED":
+					newLabel.innerHTML += " 2️⃣";
+					break;
 				default:
 				  alert("Error in game:", resp);
 				  break;
