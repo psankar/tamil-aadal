@@ -25,3 +25,32 @@
     font-size: 2rem;
   }
 }
+
+.key {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0;
+  text-align: center;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 1rem;
+}
+.key:not(:last-child) {
+  margin-right: 0.2rem;
+}
+.key:hover {
+  background-color: #eee;
+}
+.key.← {
+  background-color: hsl(347, 90%, 96%);
+}
+
+#keyboard {
+  position: absolute;
+  margin: 0 auto;
+  bottom: 0;
+  max-width: 600px;
+  width: 100%;
+}
