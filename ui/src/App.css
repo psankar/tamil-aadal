@@ -50,18 +50,20 @@
   background-color: hsl(219, 70%, 96%);
 }
 
-.workbench {
-  max-height: calc(100vh - 56px - 166px);
-  overflow-y: scroll;
+#header {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 10;
 }
 
 #keyboard {
-  position: absolute;
-  margin: 0 auto;
+  position: sticky;
   bottom: 0;
   max-width: 600px;
   width: 100%;
   box-shadow: 0 -1px 2px #dcdcdc;
   padding: 4px;
   background-color: white;
+  z-index: 10;
 }

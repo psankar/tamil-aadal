@@ -59,7 +59,7 @@ function Workbench({
   }, [guesses]);
 
   return (
-    <div className="is-flex is-flex-direction-column is-justify-content-between workbench">
+    <div className="is-flex is-flex-direction-column is-justify-content-space-between workbench">
       <div id="historyboxes">
         {guesses.map((g, i) => (
           <HistoryBoxes key={i} guess={g} />

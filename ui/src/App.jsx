@@ -86,8 +86,8 @@ function App() {
 
   return (
     <div
-      style={{ maxWidth: "600px" }}
-      className="is-flex is-flex-direction-column mx-auto"
+      style={{ maxWidth: "600px", minHeight: "100vh" }}
+      className="is-flex is-flex-direction-column is-justify-content-space-between mx-auto"
     >
       <Header onShow={(page) => setCurrentPage(page)} />
       {!lengthLoaded ? <section className="section">Loading...</section> : null}
