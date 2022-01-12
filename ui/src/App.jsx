@@ -13,6 +13,7 @@ import Success from "./components/Success";
 
 const defaultPreferences = {
   helperMode: true,
+  disableKeys: true,
 };
 
 function App() {
@@ -31,7 +32,14 @@ function App() {
   const [settings, setSettings] = useState(dbget("userPreferences"));
   if (!settings) {
     setSettings(defaultPreferences);
-    dbset("userPreferences", defaultPreferences);
+  }
+  // update any new settings added by app upgrades
+  if (settings) {
+    for (let pref in defaultPreferences) {
+      if (!settings.hasOwnProperty(pref)) {
+        setSettings({ ...settings, [pref]: defaultPreferences[pref] });
+      }
+    }
   }
 
   useEffect(() => {
@@ -117,7 +125,10 @@ function App() {
         />
       )}
       {currentPage === PAGES.WORKBENCH ? (
-        <Keyboard onType={(c) => typeChar(c)} blacklist={blacklist} />
+        <Keyboard
+          onType={(c) => typeChar(c)}
+          blacklist={settings.disableKeys ? blacklist : new Set()}
+        />
       ) : null}
     </div>
   );

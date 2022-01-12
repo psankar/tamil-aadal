@@ -5,8 +5,10 @@ import { diacritics, vowels } from "../utils";
 
 const ROWTYPE = { MAIN: "main", ALT: "alt" };
 
-function Keyboard({ onType }) {
+function Keyboard({ blacklist, onType }) {
   const [rowType, setRowType] = useState(ROWTYPE.MAIN);
+  const [prevChar, setPrevChar] = useState("");
+
   let rows = t99layout.rows;
   let altrows = t99layout.altrows;
   const actionKeys = {
@@ -23,6 +25,7 @@ function Keyboard({ onType }) {
       ? setRowType(ROWTYPE.ALT)
       : setRowType(ROWTYPE.MAIN);
     onType(char);
+    setPrevChar(char);
   };
 
   const toggleLayout = () => {
@@ -34,7 +37,13 @@ function Keyboard({ onType }) {
   return (
     <div id="keyboard">
       {(rowType === ROWTYPE.MAIN ? rows : altrows).map((row, i) => (
-        <KeyRow key={i} glyphs={row.split(" ")} onType={(c) => handleType(c)} />
+        <KeyRow
+          key={i}
+          glyphs={row.split(" ")}
+          prevChar={prevChar}
+          blacklist={blacklist}
+          onType={(c) => handleType(c)}
+        />
       ))}
     </div>
   );

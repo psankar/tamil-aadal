@@ -67,3 +67,7 @@
   background-color: white;
   z-index: 10;
 }
+
+.key:disabled {
+  background-color: #ccc;
+}
