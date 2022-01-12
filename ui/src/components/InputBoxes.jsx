@@ -4,7 +4,7 @@ import Cell from "./Cell";
 function InputBoxes({ letters, length, blacklist, highlightEmpty }) {
   let fullarray = [...Array(length)].map((_, i) => letters[i] || "");
   return (
-    <div className="is-flex is-justify-content-center">
+    <div id="input-boxes" className="is-flex is-justify-content-center">
       {fullarray.map((l, i) => (
         <Cell
           key={i}

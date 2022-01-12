@@ -75,6 +75,7 @@ function Workbench({
           />
           <div className="my-3 buttons">
             <button
+              id="verify-button"
               className="button is-primary mx-auto"
               onClick={() => verify()}
             >

@@ -3,13 +3,14 @@ import { set as dbset, get as dbget } from "lockr";
 import "./App.css";
 import Header from "./components/Header";
 import Workbench from "./components/Workbench";
-import Instructions from "./components/Instructions";
 import axios from "axios";
 import Keyboard from "./components/Keyboard";
 import { diacritics, toTamilLetters } from "./utils";
 import Settings from "./components/Settings";
 import { PAGES } from "./utils";
 import Success from "./components/Success";
+import Joyride, { STATUS, StoreHelpers } from "react-joyride";
+import DemoSteps from "./components/JoyRide";
 
 const defaultPreferences = {
   helperMode: true,
@@ -23,13 +24,16 @@ function App() {
   const [currentPage, setCurrentPage] = useState(
     dbget("lastSuccess") === new Date().toDateString()
       ? PAGES.SUCCESS
-      : PAGES.INSTRUCTIONS
+      : PAGES.WORKBENCH
   );
   const [wordLength, setWordLength] = useState(5);
   const [lengthLoaded, setLengthLoaded] = useState(false);
   const [currentWord, setCurrentWord] = useState("");
   const [blacklist, setBlackList] = useState(new Set());
   const [settings, setSettings] = useState(dbget("userPreferences"));
+  const [runDemo, setRunDemo] = useState(true);
+  let demoHelpers;
+
   if (!settings) {
     setSettings(defaultPreferences);
   }
@@ -92,44 +96,74 @@ function App() {
     dbset("lastSuccess", new Date().toDateString());
   };
 
+  const handleJoyrideCallback = (data) => {
+    const { status } = data;
+    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+      setRunDemo(false);
+    }
+  };
+
+  const handleHeaderOnShow = (page) => {
+    if (page === PAGES.INSTRUCTIONS) {
+      setRunDemo(true);
+      return;
+    }
+    setCurrentPage(page);
+  };
+
   return (
-    <div
-      style={{ maxWidth: "600px", minHeight: "100vh" }}
-      className={
-        "is-flex is-flex-direction-column mx-auto" +
-        (currentPage === PAGES.WORKBENCH
-          ? " is-justify-content-space-between"
-          : "")
-      }
-    >
-      <Header onShow={(page) => setCurrentPage(page)} />
-      {!lengthLoaded ? <section className="section">Loading...</section> : null}
-      {currentPage === PAGES.INSTRUCTIONS ? (
-        <Instructions onHide={() => setCurrentPage(PAGES.WORKBENCH)} />
-      ) : currentPage === PAGES.SETTINGS ? (
-        <Settings
-          settings={settings}
-          onClose={() => setCurrentPage(PAGES.WORKBENCH)}
-          onUpdate={onUpdateSettings}
-        />
-      ) : currentPage === PAGES.SUCCESS ? (
-        <Success />
-      ) : (
-        <Workbench
-          length={wordLength}
-          letters={toTamilLetters(currentWord)}
-          complete={succeeded}
-          onVerified={handleVerified}
-          onSuccess={handleSuccess}
-          blacklist={settings.helperMode ? blacklist : new Set()}
-        />
-      )}
-      {currentPage === PAGES.WORKBENCH ? (
-        <Keyboard
-          onType={(c) => typeChar(c)}
-          blacklist={settings.disableKeys ? blacklist : new Set()}
-        />
-      ) : null}
+    <div style={{ maxWidth: "600px", minHeight: "100vh" }} className="mx-auto">
+      <Joyride
+        steps={DemoSteps}
+        continuous={true}
+        run={runDemo}
+        scrollToFirstStep={true}
+        showSkipButton={true}
+        styles={{
+          options: {
+            zIndex: 10000,
+          },
+        }}
+        callback={handleJoyrideCallback}
+      />
+      <div
+        style={{ minHeight: "100vh" }}
+        className={
+          "is-flex is-flex-direction-column" +
+          (currentPage === PAGES.WORKBENCH
+            ? " is-justify-content-space-between"
+            : "")
+        }
+      >
+        <Header onShow={handleHeaderOnShow} />
+        {!lengthLoaded ? (
+          <section className="section">Loading...</section>
+        ) : null}
+        {currentPage === PAGES.SETTINGS ? (
+          <Settings
+            settings={settings}
+            onClose={() => setCurrentPage(PAGES.WORKBENCH)}
+            onUpdate={onUpdateSettings}
+          />
+        ) : currentPage === PAGES.SUCCESS ? (
+          <Success />
+        ) : (
+          <Workbench
+            length={wordLength}
+            letters={toTamilLetters(currentWord)}
+            complete={succeeded}
+            onVerified={handleVerified}
+            onSuccess={handleSuccess}
+            blacklist={settings?.helperMode ? blacklist : new Set()}
+          />
+        )}
+        {currentPage === PAGES.WORKBENCH ? (
+          <Keyboard
+            onType={(c) => typeChar(c)}
+            blacklist={settings?.disableKeys ? blacklist : new Set()}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }
