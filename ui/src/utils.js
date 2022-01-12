@@ -40,7 +40,7 @@ export function toTamilLetters(word) {
   let letters = [];
   for (let i = 0; i !== word.length; i++) {
     let ch = word[i];
-    diacritics[ch] && letters[letters.length - 1].length < 2
+    diacritics[ch] && letters.length && letters[letters.length - 1].length < 2
       ? (letters[letters.length - 1] += ch)
       : letters.push(ch);
   }

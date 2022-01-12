@@ -87,7 +87,12 @@ function App() {
   return (
     <div
       style={{ maxWidth: "600px", minHeight: "100vh" }}
-      className="is-flex is-flex-direction-column is-justify-content-space-between mx-auto"
+      className={
+        "is-flex is-flex-direction-column mx-auto" +
+        (currentPage === PAGES.WORKBENCH
+          ? " is-justify-content-space-between"
+          : "")
+      }
     >
       <Header onShow={(page) => setCurrentPage(page)} />
       {!lengthLoaded ? <section className="section">Loading...</section> : null}
