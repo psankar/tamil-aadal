@@ -9,7 +9,7 @@ import { diacritics, toTamilLetters } from "./utils";
 import Settings from "./components/Settings";
 import { PAGES } from "./utils";
 import Success from "./components/Success";
-import Joyride, { STATUS, StoreHelpers } from "react-joyride";
+import Joyride, { STATUS } from "react-joyride";
 import DemoSteps from "./components/JoyRide";
 
 const defaultPreferences = {
@@ -32,7 +32,6 @@ function App() {
   const [blacklist, setBlackList] = useState(new Set());
   const [settings, setSettings] = useState(dbget("userPreferences"));
   const [runDemo, setRunDemo] = useState(true);
-  let demoHelpers;
 
   if (!settings) {
     setSettings(defaultPreferences);
