@@ -248,6 +248,8 @@ const htmlFile = `<html>
 			}
 			tilesDiv.appendChild(newLabel);
 
+			document.getElementById("curword").value = "";
+
 			return;
 		  case 200:
 			jsonResponse = JSON.parse(http.responseText);
@@ -282,6 +284,7 @@ const htmlFile = `<html>
 			tilesDiv.appendChild(newLabel);
 			tilesBreak = document.createElement("br");
 			tilesDiv.appendChild(tilesBreak);
+			document.getElementById("curword").value = "";
 			return;
 		  default:
 			alert(http.responseText);
