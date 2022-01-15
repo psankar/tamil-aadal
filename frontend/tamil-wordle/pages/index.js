@@ -30,6 +30,7 @@ export default function Home({ word_length, server, error }) {
         over: false,
         word_length,
         words: [], // [{word, status}]
+        triedWords: {}, // map of tried Words for checking duplicates
         letterHint: {}, // {leter: [CORRECT, WRONG_PLACE, NOT THERE] for the given pos
     }); // {word, result}
     let [showModal, updateShowModal] = useState(false);
@@ -37,7 +38,7 @@ export default function Home({ word_length, server, error }) {
     let showAlert = (status, msg) => updateAlert({...alert, msg: msg +"", status, show: true});
 
     function checkDuplicate(word) {
-        return _.find(gameState.words, (x) => x.word === word) !== undefined;
+        return gameState.triedWords[word] !== undefined;
     }
 
     function onGameOver() {
@@ -45,6 +46,8 @@ export default function Home({ word_length, server, error }) {
     }
 
     async function onNewGuess(guess) {
+        gameState.triedWords[guess] = true;
+        updateGameState({...gameState});
         let word = [];
         guess.forUnicodeEach((x) => word.push(x));
         try {
@@ -91,6 +94,8 @@ export default function Home({ word_length, server, error }) {
                 onGameOver();
             }
         } catch (error) {
+            gameState.triedWords[guess] = undefined;
+            updateGameState({...gameState});
             showAlert("error", error);
             console.error(error);
         }
