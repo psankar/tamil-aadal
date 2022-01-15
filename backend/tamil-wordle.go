@@ -14,6 +14,8 @@ const (
 	LetterMatched   = "LETTER_MATCHED"
 	LetterElseWhere = "LETTER_ELSEWHERE"
 	LetterNotFound  = "LETTER_NOT_FOUND"
+	UyirMatched     = "UYIR_MATCHED"
+	MeiMatched      = "MEI_MATCHED"
 )
 
 var todayLetters []string
@@ -126,6 +128,48 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(&w, r)
+	if (*r).Method == "OPTIONS" {
+		return
+	}
+	var letters []string
+	err := json.NewDecoder(r.Body).Decode(&letters)
+	if err != nil {
+		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்", http.StatusBadRequest)
+		return
+	}
+
+	if len(letters) != len(todayLetters) {
+		http.Error(w, "Invalid word length; சரியான நீளத்தில் அனுப்பவும்", http.StatusBadRequest)
+		return
+	}
+
+	allMatched := true
+
+	var response []string = validate(letters, todayLetters)
+	for _, letter := range response {
+		if letter != LetterMatched {
+			allMatched = false
+			break
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	if allMatched {
+		w.WriteHeader(http.StatusAccepted)
+		w.Write([]byte("OK"))
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+}
+
 func splitWordGetLetters(word string) ([]string, error) {
 	var letters []string
 
@@ -162,6 +206,7 @@ func main() {
 
 	http.HandleFunc("/get-current-word-len", getCurrentWordLenHandler)
 	http.HandleFunc("/verify-word", verifyWordHandler)
+	http.HandleFunc("/v1/verify-word", verifyWordWithUyirMeiHandler)
 	http.HandleFunc("/", homeHandler)
 
 	// Determine port for HTTP service.
@@ -194,6 +239,8 @@ const htmlFile = `<html>
   <p>❤️ - சரியான எழுத்து</p>
   <p>&#128584; - இல்லாத எழுத்து, கடல்லையே இல்லையாம்</p>
   <p>&#128064; - தவறான இடத்தில் உள்ள சரியான எழுத்து</p>
+	<p>1️⃣ - சரியான இடத்தில் உள்ள உயிர் எழுத்து வரிசை</p>
+	<p>2️⃣ - சரியான இடத்தில் உள்ள மெய் எழுத்து வரிசை</p>
   <hr />
   <div id="tilesDiv"></div>
   <hr />
@@ -230,7 +277,7 @@ const htmlFile = `<html>
 	}
 
 	const http = new XMLHttpRequest();
-	http.open("POST", "/verify-word");
+	http.open("POST", "/v1/verify-word");
 	http.setRequestHeader("Content-Type", "application/json");
 	http.send(JSON.stringify(targetList));
 
@@ -247,7 +294,8 @@ const htmlFile = `<html>
 			  newLabel.innerHTML += " ❤️ ";
 			}
 			tilesDiv.appendChild(newLabel);
-
+			tilesBreak = document.createElement("br");
+			tilesDiv.appendChild(tilesBreak);
 			document.getElementById("curword").value = "";
 
 			return;
@@ -276,6 +324,12 @@ const htmlFile = `<html>
 				case "LETTER_MATCHED":
 				  newLabel.innerHTML += " ❤️ ";
 				  break;
+				case "UYIR_MATCHED":
+					newLabel.innerHTML += " 1️⃣";
+					break;
+				case "MEI_MATCHED":
+					newLabel.innerHTML += " 2️⃣";
+					break;
 				default:
 				  alert("Error in game:", resp);
 				  break;
