@@ -550,7 +550,10 @@ func getWordForToday() string {
 }
 
 func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
-	enableCORS(&w, r)
+	enableCORS(w, r)
+	if r.Method == http.MethodOptions {
+		return
+	}
 
 	err := json.NewEncoder(w).Encode(CurrentWordLenResponse{len(todayLetters)})
 	if err != nil {
@@ -561,19 +564,22 @@ func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
-	enableCORS(&w, r)
-	if (*r).Method == "OPTIONS" {
+	enableCORS(w, r)
+	if r.Method == http.MethodOptions {
 		return
 	}
+
 	var letters []string
 	err := json.NewDecoder(r.Body).Decode(&letters)
 	if err != nil {
-		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்", http.StatusBadRequest)
+		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்",
+			http.StatusBadRequest)
 		return
 	}
 
 	if len(letters) != len(todayLetters) {
-		http.Error(w, "Invalid word length; சரியான நீளத்தில் அனுப்பவும்", http.StatusBadRequest)
+		http.Error(w, "Invalid word length; சரியான நீளத்தில் அனுப்பவும்",
+			http.StatusBadRequest)
 		return
 	}
 
@@ -610,19 +616,22 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
-	enableCORS(&w, r)
-	if (*r).Method == "OPTIONS" {
+	enableCORS(w, r)
+	if r.Method == http.MethodOptions {
 		return
 	}
+
 	var letters []string
 	err := json.NewDecoder(r.Body).Decode(&letters)
 	if err != nil {
-		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்", http.StatusBadRequest)
+		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்",
+			http.StatusBadRequest)
 		return
 	}
 
 	if len(letters) != len(todayLetters) {
-		http.Error(w, "Invalid word length; சரியான நீளத்தில் அனுப்பவும்", http.StatusBadRequest)
+		http.Error(w, "Invalid word length; சரியான நீளத்தில் அனுப்பவும்",
+			http.StatusBadRequest)
 		return
 	}
 
@@ -691,7 +700,7 @@ func splitWordGetLetters(word string) ([]string, error) {
 
 		if _, yes := isDiacritic[r]; yes {
 			if len(letters) == 0 {
-				return nil, fmt.Errorf("Invalid diacritic position")
+				return nil, fmt.Errorf("invalid diacritic position")
 			}
 			letters[len(letters)-1] += string(r)
 		} else {
@@ -703,13 +712,14 @@ func splitWordGetLetters(word string) ([]string, error) {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl.Execute(w, nil)
+	http.Redirect(w, r, "/ui1", http.StatusSeeOther)
 }
 
-func enableCORS(w *http.ResponseWriter, req *http.Request) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+func enableCORS(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers",
+		"Accept, Content-Type, Content-Length, Accept-Encoding")
 }
 
 func main() {
@@ -717,7 +727,15 @@ func main() {
 
 	http.HandleFunc("/get-current-word-len", getCurrentWordLenHandler)
 	http.HandleFunc("/verify-word", verifyWordHandler)
-	http.HandleFunc("/v1/verify-word", verifyWordWithUyirMeiHandler)
+	http.HandleFunc("/verify-word-with-uyirmei", verifyWordWithUyirMeiHandler)
+
+	ui1 := http.FileServer(http.Dir("./ui1"))
+	ui2 := http.FileServer(http.Dir("./ui2"))
+	ui3 := http.FileServer(http.Dir("./ui3"))
+	http.Handle("/ui1/", ui1)
+	http.Handle("/ui2/", ui2)
+	http.Handle("/ui3/", ui3)
+
 	http.HandleFunc("/", homeHandler)
 
 	// Determine port for HTTP service.
@@ -733,154 +751,3 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
-const htmlFile = `<html>
-<meta charset="UTF-8" />
-
-<head>
-  <title>Tamil Wordle</title>
-</head>
-
-<body>
-  <label id="lengthLabel"></label> எழுத்து(க்)கள் அளவு நீளமான தமிழ்ச்சொல்லை,
-  தமிழில் தட்டச்சு செய்து, 'சரி' பொத்தானை அழுத்தவும் <br />
-  <input type="text" id="curword" />
-  <button onclick="process()">சரி</button>
-  <hr />
-  <p>❤️ - சரியான எழுத்து</p>
-  <p>&#128584; - இல்லாத எழுத்து, கடல்லையே இல்லையாம்</p>
-  <p>&#128064; - தவறான இடத்தில் உள்ள சரியான எழுத்து</p>
-	<p>1️⃣ - சரியான இடத்தில் உள்ள உயிர் எழுத்து வரிசை</p>
-	<p>2️⃣ - சரியான இடத்தில் உள்ள மெய் எழுத்து வரிசை</p>
-  <hr />
-  <div id="tilesDiv"></div>
-  <hr />
-  <div id="historyDiv"></div>
-</body>
-
-<script>
-  function process() {
-	var str = document.getElementById("curword").value.trim();
-
-	var diacritics = {
-	  "\u0B82": true,
-	  "\u0BBE": true,
-	  "\u0BBF": true,
-	  "\u0BC0": true,
-	  "\u0BC1": true,
-	  "\u0BC2": true,
-	  "\u0BC6": true,
-	  "\u0BC7": true,
-	  "\u0BC8": true,
-	  "\u0BCA": true,
-	  "\u0BCB": true,
-	  "\u0BCC": true,
-	  "\u0BCD": true,
-	  "\u0BD7": true,
-	};
-
-	var targetList = [];
-	for (var i = 0; i != str.length; i++) {
-	  var ch = str[i];
-	  diacritics[ch]
-		? (targetList[targetList.length - 1] += ch)
-		: targetList.push(ch);
-	}
-
-	const http = new XMLHttpRequest();
-	http.open("POST", "/v1/verify-word");
-	http.setRequestHeader("Content-Type", "application/json");
-	http.send(JSON.stringify(targetList));
-
-	http.onreadystatechange = (e) => {
-	  if (http.readyState === XMLHttpRequest.DONE) {
-		switch (http.status) {
-		  case 202:
-			alert(
-			  "சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள் !!! If you are interested, copy and paste the emoji table to social media."
-			);
-			var tilesDiv = document.getElementById("tilesDiv");
-			var newLabel = document.createElement("Label");
-			for (var i = 0; i < jsonResponse.length; i++) {
-			  newLabel.innerHTML += " ❤️ ";
-			}
-			tilesDiv.appendChild(newLabel);
-			tilesBreak = document.createElement("br");
-			tilesDiv.appendChild(tilesBreak);
-			document.getElementById("curword").value = "";
-
-			return;
-		  case 200:
-			jsonResponse = JSON.parse(http.responseText);
-
-			var historyDiv = document.getElementById("historyDiv");
-			var historyEntry = document.createElement("Label");
-			historyEntry.innerHTML = str;
-			var historyBreak = document.createElement("br");
-			historyDiv.appendChild(historyEntry);
-			historyDiv.appendChild(historyBreak);
-
-			var tilesDiv = document.getElementById("tilesDiv");
-			var newLabel = document.createElement("Label");
-
-			for (var i = 0; i < jsonResponse.length; i++) {
-			  var resp = jsonResponse[i];
-			  switch (resp) {
-				case "LETTER_NOT_FOUND":
-				  newLabel.innerHTML += " &#128584; ";
-				  break;
-				case "LETTER_ELSEWHERE":
-				  newLabel.innerHTML += " &#128064; ";
-				  break;
-				case "LETTER_MATCHED":
-				  newLabel.innerHTML += " ❤️ ";
-				  break;
-				case "UYIR_MATCHED":
-					newLabel.innerHTML += " 1️⃣";
-					break;
-				case "MEI_MATCHED":
-					newLabel.innerHTML += " 2️⃣";
-					break;
-				default:
-				  alert("Error in game:", resp);
-				  break;
-			  }
-			}
-			tilesDiv.appendChild(newLabel);
-			tilesBreak = document.createElement("br");
-			tilesDiv.appendChild(tilesBreak);
-			document.getElementById("curword").value = "";
-			return;
-		  default:
-			alert(http.responseText);
-			return;
-		}
-	  }
-	};
-  }
-
-  function loadLen() {
-	const http = new XMLHttpRequest();
-	http.open("GET", "/get-current-word-len");
-	http.onreadystatechange = (e) => {
-	  if (http.readyState === XMLHttpRequest.DONE) {
-		var status = http.status;
-
-		if (status !== 200) {
-		  console.log("some error happened", http.status);
-		  alert("Error loading the game!");
-		  return;
-		}
-
-		var jsonResponse = JSON.parse(http.responseText);
-		var lengthLabel = document.getElementById("lengthLabel");
-		lengthLabel.innerText = jsonResponse.Length;
-	  }
-	};
-	http.send();
-  }
-
-  window.onload = loadLen();
-</script>
-</html>
-`

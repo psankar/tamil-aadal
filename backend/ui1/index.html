@@ -14,6 +14,8 @@
     <p>❤️ - சரியான எழுத்து</p>
     <p>&#128584; - இல்லாத எழுத்து, கடல்லையே இல்லையாம்</p>
     <p>&#128064; - தவறான இடத்தில் உள்ள சரியான எழுத்து</p>
+    <p>1️⃣ - சரியான இடத்தில் உள்ள உயிர் எழுத்து வரிசை</p>
+    <p>2️⃣ - சரியான இடத்தில் உள்ள மெய் எழுத்து வரிசை</p>
     <hr />
     <div id="tilesDiv"></div>
     <hr />
@@ -50,7 +52,7 @@
       }
 
       const http = new XMLHttpRequest();
-      http.open("POST", "/verify-word");
+      http.open("POST", "/v1/verify-word");
       http.setRequestHeader("Content-Type", "application/json");
       http.send(JSON.stringify(targetList));
 
@@ -67,6 +69,9 @@
                 newLabel.innerHTML += " ❤️ ";
               }
               tilesDiv.appendChild(newLabel);
+              tilesBreak = document.createElement("br");
+              tilesDiv.appendChild(tilesBreak);
+              document.getElementById("curword").value = "";
 
               return;
             case 200:
@@ -94,6 +99,12 @@
                   case "LETTER_MATCHED":
                     newLabel.innerHTML += " ❤️ ";
                     break;
+                  case "UYIR_MATCHED":
+                    newLabel.innerHTML += " 1️⃣";
+                    break;
+                  case "MEI_MATCHED":
+                    newLabel.innerHTML += " 2️⃣";
+                    break;
                   default:
                     alert("Error in game:", resp);
                     break;
@@ -102,6 +113,7 @@
               tilesDiv.appendChild(newLabel);
               tilesBreak = document.createElement("br");
               tilesDiv.appendChild(tilesBreak);
+              document.getElementById("curword").value = "";
               return;
             default:
               alert(http.responseText);
