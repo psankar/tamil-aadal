@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -21,7 +20,6 @@ const (
 var todayLetters []string
 var todayLettersMap map[string]struct{}
 var isDiacritic map[rune]struct{}
-var tmpl *template.Template
 
 var uyirMap, meiMap map[string]string
 
@@ -53,12 +51,6 @@ func init() {
 	todayLettersMap = make(map[string]struct{})
 	for _, letter := range todayLetters {
 		todayLettersMap[letter] = empty
-	}
-
-	tmpl, err = template.New("wordle").Parse(htmlFile)
-	if err != nil {
-		log.Fatal(err)
-		return
 	}
 
 	uyirMap = map[string]string{
@@ -729,10 +721,11 @@ func main() {
 	http.HandleFunc("/verify-word", verifyWordHandler)
 	http.HandleFunc("/verify-word-with-uyirmei", verifyWordWithUyirMeiHandler)
 
+	log.Println(os.Getwd())
 	ui1 := http.FileServer(http.Dir("./ui1"))
 	ui2 := http.FileServer(http.Dir("./ui2"))
 	ui3 := http.FileServer(http.Dir("./ui3"))
-	http.Handle("/ui1/", ui1)
+	http.Handle("/ui1/", http.StripPrefix("/ui1/", ui1))
 	http.Handle("/ui2/", ui2)
 	http.Handle("/ui3/", ui3)
 
