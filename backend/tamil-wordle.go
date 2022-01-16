@@ -721,13 +721,12 @@ func main() {
 	http.HandleFunc("/verify-word", verifyWordHandler)
 	http.HandleFunc("/verify-word-with-uyirmei", verifyWordWithUyirMeiHandler)
 
-	log.Println(os.Getwd())
 	ui1 := http.FileServer(http.Dir("./ui1"))
 	ui2 := http.FileServer(http.Dir("./ui2"))
 	ui3 := http.FileServer(http.Dir("./ui3"))
 	http.Handle("/ui1/", http.StripPrefix("/ui1/", ui1))
-	http.Handle("/ui2/", ui2)
-	http.Handle("/ui3/", ui3)
+	http.Handle("/ui2/", http.StripPrefix("/ui2/", ui2))
+	http.Handle("/ui3/", http.StripPrefix("/ui3/", ui3))
 
 	http.HandleFunc("/", homeHandler)
 
