@@ -23,6 +23,8 @@ var todayLettersMap map[string]struct{}
 var isDiacritic map[rune]struct{}
 var tmpl *template.Template
 
+var uyirMap, meiMap map[string]string
+
 func init() {
 	var empty struct{}
 	isDiacritic = make(map[rune]struct{})
@@ -57,6 +59,270 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 		return
+	}
+
+	uyirMap = map[string]string{
+		"க": "அ",
+		"ங": "அ",
+		"ச": "அ",
+		"ஞ": "அ",
+		"ட": "அ",
+		"ண": "அ",
+		"த": "அ",
+		"ந": "அ",
+		"ப": "அ",
+		"ம": "அ",
+		"ய": "அ",
+		"ர": "அ",
+		"ல": "அ",
+		"வ": "அ",
+		"ழ": "அ",
+		"ள": "அ",
+		"ற": "அ",
+		"ன": "அ",
+
+		"கா": "ஆ",
+		"ஙா": "ஆ",
+		"சா": "ஆ",
+		"ஞா": "ஆ",
+		"டா": "ஆ",
+		"ணா": "ஆ",
+		"தா": "ஆ",
+		"நா": "ஆ",
+		"பா": "ஆ",
+		"மா": "ஆ",
+		"யா": "ஆ",
+		"ரா": "ஆ",
+		"லா": "ஆ",
+		"வா": "ஆ",
+		"ழா": "ஆ",
+		"ளா": "ஆ",
+		"றா": "ஆ",
+		"னா": "ஆ",
+
+		"கி": "இ",
+		"ஙி": "இ",
+		"சி": "இ",
+		"ஞி": "இ",
+		"டி": "இ",
+		"ணி": "இ",
+		"தி": "இ",
+		"நி": "இ",
+		"பி": "இ",
+		"மி": "இ",
+		"யி": "இ",
+		"ரி": "இ",
+		"லி": "இ",
+		"வி": "இ",
+		"ழி": "இ",
+		"ளி": "இ",
+		"றி": "இ",
+		"னி": "இ",
+
+		"கீ": "ஈ",
+		"ஙீ": "ஈ",
+		"சீ": "ஈ",
+		"ஞீ": "ஈ",
+		"டீ": "ஈ",
+		"ணீ": "ஈ",
+		"தீ": "ஈ",
+		"நீ": "ஈ",
+		"பீ": "ஈ",
+		"மீ": "ஈ",
+		"யீ": "ஈ",
+		"ரீ": "ஈ",
+		"லீ": "ஈ",
+		"வீ": "ஈ",
+		"ழீ": "ஈ",
+		"ளீ": "ஈ",
+		"றீ": "ஈ",
+		"னீ": "ஈ",
+
+		"கு": "உ",
+		"ஙு": "உ",
+		"சு": "உ",
+		"ஞு": "உ",
+		"டு": "உ",
+		"ணு": "உ",
+		"து": "உ",
+		"நு": "உ",
+		"பு": "உ",
+		"மு": "உ",
+		"யு": "உ",
+		"ரு": "உ",
+		"லு": "உ",
+		"வு": "உ",
+		"ழு": "உ",
+		"ளு": "உ",
+		"று": "உ",
+		"னு": "உ",
+
+		"கூ": "ஊ",
+		"ஙூ": "ஊ",
+		"சூ": "ஊ",
+		"ஞூ": "ஊ",
+		"டூ": "ஊ",
+		"ணூ": "ஊ",
+		"தூ": "ஊ",
+		"நூ": "ஊ",
+		"பூ": "ஊ",
+		"மூ": "ஊ",
+		"யூ": "ஊ",
+		"ரூ": "ஊ",
+		"லூ": "ஊ",
+		"வூ": "ஊ",
+		"ழூ": "ஊ",
+		"ளூ": "ஊ",
+		"றூ": "ஊ",
+		"னூ": "ஊ",
+
+		"கெ": "எ",
+		"ஙெ": "எ",
+		"செ": "எ",
+		"ஞெ": "எ",
+		"டெ": "எ",
+		"ணெ": "எ",
+		"தெ": "எ",
+		"நெ": "எ",
+		"பெ": "எ",
+		"மெ": "எ",
+		"யெ": "எ",
+		"ரெ": "எ",
+		"லெ": "எ",
+		"வெ": "எ",
+		"ழெ": "எ",
+		"ளெ": "எ",
+		"றெ": "எ",
+		"னெ": "எ",
+
+		"கே": "ஏ",
+		"ஙே": "ஏ",
+		"சே": "ஏ",
+		"ஞே": "ஏ",
+		"டே": "ஏ",
+		"ணே": "ஏ",
+		"தே": "ஏ",
+		"நே": "ஏ",
+		"பே": "ஏ",
+		"மே": "ஏ",
+		"யே": "ஏ",
+		"ரே": "ஏ",
+		"லே": "ஏ",
+		"வே": "ஏ",
+		"ழே": "ஏ",
+		"ளே": "ஏ",
+		"றே": "ஏ",
+		"னே": "ஏ",
+
+		"கை": "ஐ",
+		"ஙை": "ஐ",
+		"சை": "ஐ",
+		"ஞை": "ஐ",
+		"டை": "ஐ",
+		"ணை": "ஐ",
+		"தை": "ஐ",
+		"நை": "ஐ",
+		"பை": "ஐ",
+		"மை": "ஐ",
+		"யை": "ஐ",
+		"ரை": "ஐ",
+		"லை": "ஐ",
+		"வை": "ஐ",
+		"ழை": "ஐ",
+		"ளை": "ஐ",
+		"றை": "ஐ",
+		"னை": "ஐ",
+
+		"கொ": "ஒ",
+		"ஙொ": "ஒ",
+		"சொ": "ஒ",
+		"ஞொ": "ஒ",
+		"டொ": "ஒ",
+		"ணொ": "ஒ",
+		"தொ": "ஒ",
+		"நொ": "ஒ",
+		"பொ": "ஒ",
+		"மொ": "ஒ",
+		"யொ": "ஒ",
+		"ரொ": "ஒ",
+		"லொ": "ஒ",
+		"வொ": "ஒ",
+		"ழொ": "ஒ",
+		"ளொ": "ஒ",
+		"றொ": "ஒ",
+		"னொ": "ஒ",
+
+		"கோ": "ஓ",
+		"ஙோ": "ஓ",
+		"சோ": "ஓ",
+		"ஞோ": "ஓ",
+		"டோ": "ஓ",
+		"ணோ": "ஓ",
+		"தோ": "ஓ",
+		"நோ": "ஓ",
+		"போ": "ஓ",
+		"மோ": "ஓ",
+		"யோ": "ஓ",
+		"ரோ": "ஓ",
+		"லோ": "ஓ",
+		"வோ": "ஓ",
+		"ழோ": "ஓ",
+		"ளோ": "ஓ",
+		"றோ": "ஓ",
+		"னோ": "ஓ",
+
+		"கௌ": "ஔ",
+		"ஙௌ": "ஔ",
+		"சௌ": "ஔ",
+		"ஞௌ": "ஔ",
+		"டௌ": "ஔ",
+		"ணௌ": "ஔ",
+		"தௌ": "ஔ",
+		"நௌ": "ஔ",
+		"பௌ": "ஔ",
+		"மௌ": "ஔ",
+		"யௌ": "ஔ",
+		"ரௌ": "ஔ",
+		"லௌ": "ஔ",
+		"வௌ": "ஔ",
+		"ழௌ": "ஔ",
+		"ளௌ": "ஔ",
+		"றௌ": "ஔ",
+		"னௌ": "ஔ",
+
+		"அ": "அ",
+		"ஆ": "ஆ",
+		"இ": "இ",
+		"ஈ": "ஈ",
+		"உ": "உ",
+		"ஊ": "ஊ",
+		"எ": "எ",
+		"ஏ": "ஏ",
+		"ஐ": "ஐ",
+		"ஒ": "ஒ",
+		"ஓ": "ஓ",
+		"ஔ": "ஔ",
+	}
+
+	meiMap = map[string]string{
+		"க":  "க்",
+		"கா": "க்",
+		"கி": "க்",
+		"கீ": "க்",
+		"கு": "க்",
+		"கூ": "க்",
+		"கெ": "க்",
+		"கே": "க்",
+		"கை": "க்",
+		"கொ": "க்",
+		"கோ": "க்",
+		"கௌ": "க்",
+
+		"ங": "ங்",
+			"ஙா": "ங்",
+				"ஙி": "ங்",	
+				"ஙீ": "ங்",
+					ஙு	ஙூ	ஙெ	ஙே	ஙை	ஙொ	ஙோ	ஙௌ
 	}
 }
 
@@ -145,17 +411,9 @@ func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allMatched := true
+	response, allMatched := verifyWordWithUyirMei(letters, todayLetters)
 
-	var response []string = validate(letters, todayLetters)
-	for _, letter := range response {
-		if letter != LetterMatched {
-			allMatched = false
-			break
-		}
-	}
 	w.Header().Set("Content-Type", "application/json")
-
 	if allMatched {
 		w.WriteHeader(http.StatusAccepted)
 		w.Write([]byte("OK"))
@@ -168,6 +426,42 @@ func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
 			http.StatusInternalServerError)
 		return
 	}
+}
+
+func verifyWordWithUyirMei(gotLetters []string,
+	wantLetters []string) ([][]string, bool) {
+
+	allMatched := true
+
+	var response [][]string
+	for i, letter := range gotLetters {
+		var curLetterResponse []string
+		if letter == wantLetters[i] {
+			curLetterResponse = []string{LetterMatched}
+			response = append(response, curLetterResponse)
+			continue
+		}
+
+		allMatched = false
+
+		if _, found := todayLettersMap[letter]; found {
+			curLetterResponse = []string{LetterElseWhere}
+		} else {
+			curLetterResponse = []string{LetterNotFound}
+		}
+
+		targetUyir, ok := uyirMap[wantLetters[i]]
+		if ok && (targetUyir == uyirMap[letter]) {
+			curLetterResponse = append(curLetterResponse, UyirMatched)
+		}
+
+		targetMei, ok := meiMap[wantLetters[i]]
+		if ok && (targetMei == meiMap[letter]) {
+			curLetterResponse = append(curLetterResponse, MeiMatched)
+		}
+	}
+
+	return response, allMatched
 }
 
 func splitWordGetLetters(word string) ([]string, error) {
