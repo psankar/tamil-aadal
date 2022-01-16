@@ -73,14 +73,13 @@
               alert(
                 "சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள் !!! If you are interested, copy and paste the emoji table to social media."
               );
-              var tilesDiv = document.getElementById("tilesDiv");
-              var newLabel = document.createElement("Label");
+              var tilesTable = document.getElementById("tilesTable");
+              var row = tilesTable.insertRow();
+
               for (var i = 0; i < jsonResponse.length; i++) {
-                newLabel.innerHTML += " ❤️ ";
+                var cell = row.insertCell();
+                cell.innerHTML = " ❤️ ";
               }
-              tilesDiv.appendChild(newLabel);
-              tilesBreak = document.createElement("br");
-              tilesDiv.appendChild(tilesBreak);
               document.getElementById("curword").value = "";
 
               return;
@@ -127,9 +126,6 @@
                 }
                 cell.innerHTML = cellBody;
               }
-              tilesDiv.appendChild(newLabel);
-              tilesBreak = document.createElement("br");
-              tilesDiv.appendChild(tilesBreak);
               document.getElementById("curword").value = "";
               return;
             default:
