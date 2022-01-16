@@ -9,6 +9,10 @@ import (
 	"unicode"
 )
 
+func getWordForToday() string {
+	return "காற்றுவெளியிடை"
+}
+
 const (
 	LetterMatched   = "LETTER_MATCHED"
 	LetterElseWhere = "LETTER_ELSEWHERE"
@@ -535,10 +539,6 @@ func init() {
 
 type CurrentWordLenResponse struct {
 	Length int
-}
-
-func getWordForToday() string {
-	return "தமிழ்"
 }
 
 func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
