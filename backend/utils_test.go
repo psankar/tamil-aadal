@@ -123,124 +123,130 @@ var basicTests = []struct {
 	{"a", false, false, "", ""},
 }
 
-func TestIsUyir(t *testing.T) {
-	for _, test := range basicTests {
-		if got := isUyir(test.input); got != test.isUyir {
-			t.Errorf("isUyir(%q) = %v, want %v", test.input, got, test.isUyir)
-		}
-	}
-}
-
-func TestIsAayudham(t *testing.T) {
-	for _, test := range basicTests {
-		if got := isAayudham(test.input); got != test.isAayudham {
-			t.Errorf("isAayudham(%q) = %v, want %v", test.input, got, test.isAayudham)
-		}
-	}
-}
-
 func TestGetMei(t *testing.T) {
 	for _, test := range basicTests {
-		if got := getMei(test.input); got != test.mei {
-			t.Errorf("getMei(%q) = %v, want %v", test.input, got, test.mei)
+		if got := meiMap[test.input]; got != test.mei {
+			t.Errorf("meiMap[%q] = %v, want %v", test.input, got, test.mei)
 		}
 	}
 }
 
 func TestGetUyir(t *testing.T) {
 	for _, test := range basicTests {
-		if got := getUyir(test.input); got != test.uyir {
-			t.Errorf("getUyir(%q) = %v, want %v", test.input, got, test.uyir)
+		if got := uyirMap[test.input]; got != test.uyir {
+			t.Errorf("uyirMap[%q] = %v, want %v", test.input, got, test.uyir)
 		}
 	}
 }
 
 var wordTests = []struct {
-	left   []string
-	right  []string
-	result []string
+	left       []string
+	right      []string
+	result     [][]string
+	allMatched bool
 }{
 	{
 		[]string{"ப", "ல்", "ம", "ணி", "மி", "கா", "லை", "ஆ", "ஃ", "ஃ"},
 		[]string{"அ", "ன்", "ம", "ணி", "மே", "க", "லை", "ஆ", "டு", "ஃ"},
-		[]string{UyirMatched, LetterNotFound, LetterMatched, LetterMatched, MeiMatched, MeiMatched, LetterMatched, LetterMatched, LetterElseWhere, LetterMatched},
-	},
-	{
-		[]string{"ப", "ல்", "ம", "ணி", "மி", "கா", "லை", "ஆ", "ஃ", "ஃ"},
-		[]string{"அ", "ன்", "ம", "ணி", "மே", "க", "லை", "ஆ", "டு"},
-		nil,
+		[][]string{{LetterNotFound, UyirMatched}, {LetterNotFound}, {LetterMatched}, {LetterMatched}, {LetterNotFound, MeiMatched}, {LetterNotFound, MeiMatched}, {LetterMatched}, {LetterMatched}, {LetterElseWhere}, {LetterMatched}},
+		false,
 	},
 	{
 		[]string{"ப", "ல்", "ம", "ணி", "மி", "கா", "லை", "ஆ", "ஃ", "a"},
 		[]string{"அ", "ன்", "ம", "ணி", "மே", "க", "லை", "ஆ", "டு", "ஃ"},
-		[]string{UyirMatched, LetterNotFound, LetterMatched, LetterMatched, MeiMatched, MeiMatched, LetterMatched, LetterMatched, LetterElseWhere, LetterNotFound},
+		[][]string{{LetterNotFound, UyirMatched}, {LetterNotFound}, {LetterMatched}, {LetterMatched}, {LetterNotFound, MeiMatched}, {LetterNotFound, MeiMatched}, {LetterMatched}, {LetterMatched}, {LetterElseWhere}, {LetterNotFound}},
+		false,
 	},
 	{
 		[]string{"த", "மி", "ழ்"},
 		[]string{"த", "மி", "ழ்"},
-		[]string{LetterMatched, LetterMatched, LetterMatched},
+		[][]string{{LetterMatched}, {LetterMatched}, {LetterMatched}},
+		true,
 	},
 	{
 		[]string{"த", "மி", "ழ"},
 		[]string{"த", "மி", "ழ்"},
-		[]string{LetterMatched, LetterMatched, MeiMatched},
+		[][]string{{LetterMatched}, {LetterMatched}, {LetterNotFound, MeiMatched}},
+		false,
 	},
 	{
 		[]string{"த", "மி", "ல்"},
 		[]string{"த", "மி", "ழ்"},
-		[]string{LetterMatched, LetterMatched, LetterNotFound},
+		[][]string{{LetterMatched}, {LetterMatched}, {LetterNotFound}},
+		false,
 	},
 	{
 		[]string{"த", "மி", "ழு"},
 		[]string{"த", "மி", "ழ்"},
-		[]string{LetterMatched, LetterMatched, MeiMatched},
+		[][]string{{LetterMatched}, {LetterMatched}, {LetterNotFound, MeiMatched}},
+		false,
 	},
 	{
 		[]string{"த", "மா", "ழ"},
 		[]string{"த", "மி", "ழ்"},
-		[]string{LetterMatched, MeiMatched, MeiMatched},
+		[][]string{{LetterMatched}, {LetterNotFound, MeiMatched}, {LetterNotFound, MeiMatched}},
+		false,
 	},
 	{
 		[]string{"த", "ரி", "ழ்"},
 		[]string{"த", "மி", "ழ்"},
-		[]string{LetterMatched, UyirMatched, LetterMatched},
+		[][]string{{LetterMatched}, {LetterNotFound, UyirMatched}, {LetterMatched}},
+		false,
 	},
 	{
 		[]string{"அ", "ரி", "ழ்"},
 		[]string{"த", "மி", "ழ்"},
-		[]string{UyirMatched, UyirMatched, LetterMatched},
+		[][]string{{LetterNotFound, UyirMatched}, {LetterNotFound, UyirMatched}, {LetterMatched}},
+		false,
 	},
 	{
 		[]string{"ச", "ரி", "ழ்"},
 		[]string{"த", "மி", "ழ்"},
-		[]string{UyirMatched, UyirMatched, LetterMatched},
+		[][]string{{LetterNotFound, UyirMatched}, {LetterNotFound, UyirMatched}, {LetterMatched}},
+		false,
 	},
 	{
 		[]string{"ச", "மி", "ழ்"},
 		[]string{"த", "மி", "ழ்"},
-		[]string{UyirMatched, LetterMatched, LetterMatched},
+		[][]string{{LetterNotFound, UyirMatched}, {LetterMatched}, {LetterMatched}},
+		false,
 	},
 	{
 		[]string{"தா", "மி", "ழ்"},
 		[]string{"த", "மி", "ழ்"},
-		[]string{MeiMatched, LetterMatched, LetterMatched},
+		[][]string{{LetterNotFound, MeiMatched}, {LetterMatched}, {LetterMatched}},
+		false,
 	},
 	{
 		[]string{"த", "ழ்", "மி"},
 		[]string{"த", "மி", "ழ்"},
-		[]string{LetterMatched, LetterElseWhere, LetterElseWhere},
+		[][]string{{LetterMatched}, {LetterElseWhere}, {LetterElseWhere}},
+		false,
 	},
 	{
 		[]string{"த", "ழி", "ழி", "ழ்"},
 		[]string{"த", "மி", "ழி", "ல்"},
-		[]string{LetterMatched, LetterElseWhere, LetterMatched, LetterNotFound},
+		[][]string{{LetterMatched}, {LetterElseWhere, UyirMatched}, {LetterMatched}, {LetterNotFound}},
+		false,
 	},
 }
 
-func TestValidate(t *testing.T) {
+func TestVerifyWordWithUyirMei(t *testing.T) {
+	var empty struct{}
 	for _, test := range wordTests {
-		if got := validate(test.left, test.right); !reflect.DeepEqual(got, test.result) {
-			t.Errorf("validate(%q, %q) = %v, want %v", test.left, test.right, got, test.result)
+
+		// TODO: This is a hack to warm up the map. `verifyWordWithUyirMei` should not depend on the local map.
+		todayLettersMap = make(map[string]struct{})
+		for _, letter := range test.right {
+			todayLettersMap[letter] = empty
+		}
+
+		gotResults, gotAllMatched := verifyWordWithUyirMei(test.left, test.right)
+		if !reflect.DeepEqual(gotResults, test.result) {
+			t.Errorf("verifyWordWithUyirMei(%q, %q) = %v, want %v", test.left, test.right, gotResults, test.result)
+		}
+		if gotAllMatched != test.allMatched {
+			t.Errorf("verifyWordWithUyirMei(%q, %q) = %v, want %v", test.left, test.right, gotAllMatched, test.allMatched)
 		}
 	}
 }
