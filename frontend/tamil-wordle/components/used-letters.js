@@ -1,6 +1,7 @@
 import * as _ from "lodash";
 import ReactDOM from "react-dom";
 import * as UC from "../unicode-utils";
+import { States } from "../game";
 
 import { Tile, Tiles, TilesHint } from "../components/tiles";
 
@@ -25,7 +26,7 @@ export function UsedLetters() {
 }
 
 export function LetterHint({word, word_length, letterStatus}) {
-    let status = _.times(word_length, _.constant("LETTER_UNKNOWN"));
+    let status = _.times(word_length, _.constant(States.LETTER_UNKNOWN));
     let i = 0;
     word.forUnicodeEach(c => {
         let hint = letterStatus[c];

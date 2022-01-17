@@ -2,6 +2,7 @@ import * as _ from "lodash";
 import ReactDOM from "react-dom";
 import { useState, useRef, useEffect } from "react";
 import * as UC from "../unicode-utils";
+import { States } from "../game";
 
 export function Tile({ letter, color, isResult = false, anim = "animate-none" }) {
     let st = `tile-${color} ${anim}`;
@@ -22,10 +23,10 @@ export function Tiles({ words, word_length, isResult = false, heading = true }) 
         word.forUnicodeEach((w) => {
             let color = "notthere";
             let emoji = String.fromCodePoint(0x2b1b);
-            if (result[i] === "LETTER_ELSEWHERE") {
+            if (result[i] === States.LETTER_ELSEWHERE) {
                 color = "jumbled";
                 emoji = String.fromCodePoint(0x1f7e8);
-            } else if (result[i] === "LETTER_MATCHED") {
+            } else if (result[i] === States.LETTER_MATCHED) {
                 color = "correct";
                 emoji = String.fromCodePoint(0x1f7e9);
             }
@@ -93,16 +94,16 @@ export function Tiles({ words, word_length, isResult = false, heading = true }) 
 function mapColor(status) {
     let color = "unknown";
     let anim = "animate-flip";
-    if (status === "LETTER_ELSEWHERE") {
+    if (status === States.LETTER_ELSEWHERE) {
         color = "jumbled";
         anim = "animate-bounce";
-    } else if (status === "LETTER_MATCHED") {
+    } else if (status === States.LETTER_MATCHED) {
         color = "correct";
         anim = "animate-none";
-    } else if (status === "LETTER_NOT_FOUND") {
+    } else if (status === States.LETTER_NOT_FOUND) {
         color = "notthere";
         anim = "animate-focus";
-    } else if (status === "LETTER_UNKNOWN") {
+    } else if (status === States.LETTER_UNKNOWN) {
         color = "unknown";
         anim = "animate-flip";
     }
@@ -116,16 +117,16 @@ export function TilesHint({ word, word_length, status, letterStatus }) {
     word.forUnicodeEach((x) => {
         let color = "unknown";
         let anim = "animate-flip";
-        if (status[i] === "LETTER_ELSEWHERE") {
+        if (status[i] === States.LETTER_ELSEWHERE) {
             color = "jumbled";
             anim = "animate-bounce";
-        } else if (status[i] === "LETTER_MATCHED") {
+        } else if (status[i] === States.LETTER_MATCHED) {
             color = "correct";
             anim = "animate-none";
-        } else if (status[i] === "LETTER_NOT_FOUND") {
+        } else if (status[i] === States.LETTER_NOT_FOUND) {
             color = "notthere";
             anim = "animate-focus";
-        } else if (status[i] === "LETTER_UNKNOWN") {
+        } else if (status[i] === States.LETTER_UNKNOWN) {
             color = "unknown";
             anim = "animate-flip";
         }

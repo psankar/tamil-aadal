@@ -15,6 +15,7 @@ import { Tile, Tiles } from "../components/tiles";
 import { Alert } from "../components/alert";
 
 import { useState, useRef, useEffect } from "react";
+import { States } from "../game";
 
 function Questionmark() {
     return (
@@ -51,7 +52,7 @@ export default function Home({ word_length, server, error }) {
         let word = [];
         guess.forUnicodeEach((x) => word.push(x));
         try {
-            const res = await fetch(`${server}/verify-word`, {
+            const res = await fetch(`${server}/${end_point}`, {
                 method: "POST",
                 mode: "cors",
                 cache: "no-cache",
@@ -70,12 +71,12 @@ export default function Home({ word_length, server, error }) {
                     let hint = gameState.letterHint[ch];
                     if (hint.length < word_length) {
                         for(let i=hint.length; i<word_length; i++)
-                            hint.push("LETTER_UNKNOWN");
+                            hint.push(States.LETTER_UNKNOWN);
                     }
-                    if(hint[pos] === "LETTER_UNKNOWN") 
+                    if(hint[pos] === States.LETTER_UNKNOWN) 
                         hint[pos] = data[pos];
-                    if(data[pos] === "LETTER_NOT_FOUND") {
-                        hint.fill("LETTER_NOT_FOUND");
+                    if(data[pos] === States.LETTER_NOT_FOUND) {
+                        hint.fill(States.LETTER_NOT_FOUND);
                     }
 
                     pos += 1;
@@ -84,7 +85,7 @@ export default function Home({ word_length, server, error }) {
             } else if (res.status === 202) {
                 let data = [];
                 guess.forUnicodeEach((x) => {
-                    data.push("LETTER_MATCHED");
+                    data.push(States.LETTER_MATCHED);
                 });
                 if (!gameState.over) {
                     gameState.words.push({ word: guess, result: data });
