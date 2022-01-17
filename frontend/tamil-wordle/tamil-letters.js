@@ -1,3 +1,6 @@
+import * as _ from 'lodash';
+
+const letterToPos = {};
 export const Letters = [
     [
         "\u0b85",
@@ -345,3 +348,16 @@ export const Letters = [
         "\u0bb9\u0bcd",
     ],
 ];
+
+export function getLetterPos(letter) {
+    console.log("here", letterToPos);
+    if(_.isEmpty(letterToPos)) {
+        for(let i=0; i<Letters.length; i++) {
+            for(let j=0; j<Letters[i].length; j++) {
+                letterToPos[Letters[i][j]] = [i, j];
+            }
+        }
+    }
+
+    return letterToPos[letter];
+}

@@ -3,11 +3,20 @@ import ReactDOM from "react-dom";
 import { useState, useRef, useEffect } from "react";
 import * as UC from "../unicode-utils";
 import { States } from "../game";
+import { getLetterPos } from "../tamil-letters";
+
+const emojimap = {
+    LETTER_NOT_FOUND: { UYIR_MATCHED: 0x1f5a4, MEI_MATCHED: 0x26AB },
+    LETTER_MATCHED: { UYIR_MATCHED: 0x1F49A, MEI_MATCHED: 0x1F7E2 },
+    LETTER_ELSEWHERE: { UYIR_MATCHED: 0x1F49B, MEI_MATCHED: 0x1F7E1 },
+    LETTER_UNKNOWN: { UYIR_MATCHED: 0x1F49C, MEI_MATCHED: 0x1F7E3 },
+};
 
 function mapStateToUIProperties(letterState, posState) {
     let color = "notthere";
     let anim = "animate-flip";
     let emoji = String.fromCodePoint(0x2b1b);
+    let border = "";
     if (letterState === States.LETTER_ELSEWHERE) {
         color = "jumbled";
         anim = "animate-bounce";
@@ -25,12 +34,32 @@ function mapStateToUIProperties(letterState, posState) {
         anim = "animate-flip";
         emoji = String.fromCodePoint(0x2b1b);
     }
-    return { color, anim, emoji };
+    if (posState === States.UYIR_MATCHED) {
+        border = "border-x-4 border-green-500";
+    } else if (posState === States.MEI_MATCHED) {
+        border = "border-y-4 border-green-500";
+    }
+
+    if(posState) {
+        let cp = emojimap[letterState][posState];
+        if(cp && !isNaN(cp))
+            emoji = String.fromCodePoint(cp);
+    }
+
+    return { color, anim, emoji, border };
 }
 
-export function Tile({ letter, letterState, posState, globalLetterState, isResult = false, anim = "animate-none" }) {
+export function Tile({
+    letter,
+    letterState,
+    posState,
+    globalLetterState,
+    isResult = false,
+    anim = "animate-none",
+    isHint = false,
+}) {
     let order = { unknown: 0, notthere: 1, jumbled: 2, correct: 3 };
-    let { color } = mapStateToUIProperties(letterState, posState);
+    let { color, border, emoji } = mapStateToUIProperties(letterState, posState);
     if (globalLetterState && globalLetterState[letter]) {
         globalLetterState[letter].forEach((st) => {
             let m = mapStateToUIProperties(st);
@@ -39,7 +68,16 @@ export function Tile({ letter, letterState, posState, globalLetterState, isResul
             }
         });
     }
-    let st = `tile-${color} ${anim}`;
+    if (isHint && posState) {
+        let letterPos = getLetterPos(letter);
+        if (letterPos && posState[0] === letterPos[0]) {
+            border = "border-x-4 border-green-500";
+        }
+        if (letterPos && posState[1] === letterPos[1]) {
+            border = "border-y-4 border-green-500";
+        }
+    }
+    let st = `tile-${color} ${anim} ${border}`;
     return <div className={st}>{isResult ? String.fromCodePoint(0x1f7e9) : letter}</div>;
 }
 
@@ -55,15 +93,6 @@ export function Tiles({ words, word_length, isResult = false, heading = true }) 
     words.forEach(({ word, result }) => {
         let i = 0;
         word.forUnicodeEach((w) => {
-            let color = "notthere";
-            let emoji = String.fromCodePoint(0x2b1b);
-            if (result[i][0] === States.LETTER_ELSEWHERE) {
-                color = "jumbled";
-                emoji = String.fromCodePoint(0x1f7e8);
-            } else if (result[i][0] === States.LETTER_MATCHED) {
-                color = "correct";
-                emoji = String.fromCodePoint(0x1f7e9);
-            }
             if (!isResult) {
                 wordTiles.push(
                     <Tile
@@ -71,10 +100,10 @@ export function Tiles({ words, word_length, isResult = false, heading = true }) 
                         letterState={result[i][0]}
                         posState={result[i].length > 1 ? result[i][1] : undefined}
                         letter={w}
-                        color={color}
                     ></Tile>
                 );
             } else {
+                let { emoji } = mapStateToUIProperties(result[i][0], result[i].length > 1 ? result[i][1] : undefined);
                 wordTiles.push(emoji);
             }
             i += 1;
@@ -148,6 +177,7 @@ export function TilesHint({ word, word_length, status, letterStatus, posHint }) 
                     posState={posHint && posHint.length > i ? posHint[i] : undefined}
                     globalLetterState={letterStatus}
                     anim={anim}
+                    isHint={true}
                 />
             );
         i += 1;

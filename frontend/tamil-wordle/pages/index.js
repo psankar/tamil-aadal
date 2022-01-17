@@ -17,6 +17,8 @@ import { Alert } from "../components/alert";
 import { useState, useRef, useEffect } from "react";
 import { States } from "../game";
 
+import {getLetterPos} from "../tamil-letters";
+
 function Questionmark() {
     return (
         <div>
@@ -33,7 +35,7 @@ export default function Home({ word_length, server, end_point, error }) {
         words: [], // [{word, status}]
         triedWords: {}, // map of tried Words for checking duplicates
         letterHint: {}, // {leter: [CORRECT, WRONG_PLACE, NOT THERE] for the given pos
-        posHint: [], // Uyir matched, Mei matched
+        posHint: [], // [ [row, col] ] - for each pos, holds the row/col match in the 19x13 tamil letter matrix
     }); // {word, result}
     let [showModal, updateShowModal] = useState(false);
     let [alert, updateAlert] = useState({msg: "", show: false, status: "error"});
@@ -80,13 +82,30 @@ export default function Home({ word_length, server, end_point, error }) {
                         hint.fill(States.LETTER_NOT_FOUND);
                     }
 
+                    // update pos hints
+                    if(gameState.posHint.length <= i+1) {
+                        gameState.posHint.push([-1,-1]);
+                        gameState.posHint.push([-1,-1]);
+                    }
+                    if(data[pos].length > 1) {
+                        let posHint = gameState.posHint[pos];
+                        if(data[pos][1] === States.MEI_MATCHED)
+                            posHint[1] = getLetterPos(ch)[1];
+                        else if(data[pos][1] === States.UYIR_MATCHED) {
+                            posHint[0] = getLetterPos(ch)[0];
+                        }
+                    }
+
                     pos += 1;
                 });
                 updateGameState({ ...gameState });
             } else if (res.status === 202) {
                 let data = [];
+                let i = 0;
                 guess.forUnicodeEach((x) => {
                     data.push([States.LETTER_MATCHED]);
+                    gameState.posHint[i] = getLetterPos[x];
+                    i+=1;
                 });
                 if (!gameState.over) {
                     gameState.words.push({ word: guess, result: data });
