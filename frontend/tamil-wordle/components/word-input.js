@@ -6,7 +6,7 @@ import { UsedLetters, LetterHint } from "../components/used-letters";
 
 import { IntlMsg } from "../messages-ta";
 
-export function Input({ word_length, letterHint, onNewGuess, checkDuplicate, letterStatus }) {
+export function Input({ word_length, letterHint, onNewGuess, checkDuplicate, letterStatus, posHint }) {
     let [word, updateWord] = useState("");
     let [msg, updateMsg] = useState("");
 
@@ -47,7 +47,7 @@ export function Input({ word_length, letterHint, onNewGuess, checkDuplicate, let
                     {IntlMsg.btn_try}
                 </button>
             </div>
-            <LetterHint word_length={word_length} word={word} letterStatus={letterStatus}/>
+            <LetterHint word_length={word_length} word={word} letterStatus={letterStatus} posHint={posHint} />
         </div>
     );
 }

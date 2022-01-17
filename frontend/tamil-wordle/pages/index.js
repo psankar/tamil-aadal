@@ -33,6 +33,7 @@ export default function Home({ word_length, server, end_point, error }) {
         words: [], // [{word, status}]
         triedWords: {}, // map of tried Words for checking duplicates
         letterHint: {}, // {leter: [CORRECT, WRONG_PLACE, NOT THERE] for the given pos
+        posHint: [], // Uyir matched, Mei matched
     }); // {word, result}
     let [showModal, updateShowModal] = useState(false);
     let [alert, updateAlert] = useState({msg: "", show: false, status: "error"});
@@ -140,6 +141,7 @@ export default function Home({ word_length, server, end_point, error }) {
                                         onNewGuess={onNewGuess}
                                         checkDuplicate={checkDuplicate}
                                         letterStatus={gameState.letterHint}
+                                        posHint={gameState.posHint}
                                         onGameOver
                                     />
                                 ) : (

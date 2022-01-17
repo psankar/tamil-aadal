@@ -25,7 +25,7 @@ export function UsedLetters() {
     );
 }
 
-export function LetterHint({word, word_length, letterStatus}) {
+export function LetterHint({word, word_length, letterStatus, posHint}) {
     let status = _.times(word_length, _.constant(States.LETTER_UNKNOWN));
     let i = 0;
     word.forUnicodeEach(c => {
@@ -37,7 +37,7 @@ export function LetterHint({word, word_length, letterStatus}) {
     });
     return (
         <div className="flex">
-            <TilesHint word_length={word_length} word={word} status={status} letterStatus={letterStatus}/>
+            <TilesHint word_length={word_length} word={word} status={status} letterStatus={letterStatus} posHint={posHint}/>
         </div>
     );
 }
