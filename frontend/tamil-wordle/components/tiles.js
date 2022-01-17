@@ -23,10 +23,10 @@ export function Tiles({ words, word_length, isResult = false, heading = true }) 
         word.forUnicodeEach((w) => {
             let color = "notthere";
             let emoji = String.fromCodePoint(0x2b1b);
-            if (result[i] === States.LETTER_ELSEWHERE) {
+            if (result[i][0] === States.LETTER_ELSEWHERE) {
                 color = "jumbled";
                 emoji = String.fromCodePoint(0x1f7e8);
-            } else if (result[i] === States.LETTER_MATCHED) {
+            } else if (result[i][0] === States.LETTER_MATCHED) {
                 color = "correct";
                 emoji = String.fromCodePoint(0x1f7e9);
             }

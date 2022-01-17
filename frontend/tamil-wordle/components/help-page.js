@@ -16,15 +16,15 @@ export function Help({ show, onClose, word_length=3 }) {
                     <div>ஒவ்வொரு முறையும், நீங்கள் முயற்சித்த சொல்லின் எழுத்துக்கள் கொண்ட கட்டத்தின் வண்ணம் கீழ்கண்டவாறு மாறும்</div>
                     <hr/>
                     <div className="flex" >
-                        <Tiles word_length="3" words={[{word: "வானம்", result: [States.LETTER_UNMATCHED, States.LETTER_UNMATCHED, States.LETTER_MATCHED]}]} heading={false}/>
+                        <Tiles word_length="3" words={[{word: "வானம்", result: [[States.LETTER_UNMATCHED], [States.LETTER_UNMATCHED], [States.LETTER_MATCHED]]}]} heading={false}/>
                     </div>
                     &apos;ம்&apos; எழுத்து சரியான இடத்தில் உள்ளது. மற்ற இரு எழுத்துக்கள் தவறு
                     <div className="flex" >
-                        <Tiles word_length="3" words={[{word: "சாதம்", result: [States.LETTER_UNMATCHED, States.LETTER_ELSEWHERE, States.LETTER_MATCHED]}]} heading={false}/>
+                        <Tiles word_length="3" words={[{word: "சாதம்", result: [[States.LETTER_UNMATCHED], [States.LETTER_ELSEWHERE], [States.LETTER_MATCHED]]}]} heading={false}/>
                     </div>
                     &apos;த&apos; எழுத்து சரி, ஆனால் இடம்மாறி உள்ளது.
                     <div className="flex" >
-                        <Tiles word_length="3" words={[{word: "தசம்", result: [States.LETTER_MATCHED, States.LETTER_MATCHED, States.LETTER_MATCHED]}]} heading={false}/>
+                        <Tiles word_length="3" words={[{word: "தசம்", result: [[States.LETTER_MATCHED], [States.LETTER_MATCHED], [States.LETTER_MATCHED]]}]} heading={false}/>
                     </div>
                     எல்லா எழுத்துக்களும், சொல்லும் சரி. நீங்கள் வெற்றி பெற்றுவிட்டீர்கள்!
                 </div>

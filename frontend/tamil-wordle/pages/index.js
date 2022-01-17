@@ -25,7 +25,7 @@ function Questionmark() {
         </div>
     );
 }
-export default function Home({ word_length, server, error }) {
+export default function Home({ word_length, server, end_point, error }) {
     let [showHelp, updateShowHelp] = useState(true);
     let [gameState, updateGameState] = useState({
         over: false,
@@ -74,7 +74,7 @@ export default function Home({ word_length, server, error }) {
                             hint.push(States.LETTER_UNKNOWN);
                     }
                     if(hint[pos] === States.LETTER_UNKNOWN) 
-                        hint[pos] = data[pos];
+                        hint[pos] = data[pos][0];
                     if(data[pos] === States.LETTER_NOT_FOUND) {
                         hint.fill(States.LETTER_NOT_FOUND);
                     }
@@ -85,7 +85,7 @@ export default function Home({ word_length, server, error }) {
             } else if (res.status === 202) {
                 let data = [];
                 guess.forUnicodeEach((x) => {
-                    data.push(States.LETTER_MATCHED);
+                    data.push([States.LETTER_MATCHED]);
                 });
                 if (!gameState.over) {
                     gameState.words.push({ word: guess, result: data });
@@ -180,6 +180,7 @@ export default function Home({ word_length, server, error }) {
 
 export async function getServerSideProps(context) {
     const server = process.env.backend_server;
+    const end_point = process.env.end_point;
     try {
         const res = await fetch(`${server}/get-current-word-len`);
         const data = await res.json();
@@ -194,6 +195,7 @@ export async function getServerSideProps(context) {
             props: {
                 word_length: data.Length,
                 server,
+                end_point,
             },
         };
     } catch (err) {
