@@ -34,3 +34,10 @@ yarn-error.log*
 .vercel
 tags
 package-lock.json
+
+*LOCAL*
+*REMOTE*
+*ORIGINAL*
+*.orig
+*BACKUP*
+*BASE*
