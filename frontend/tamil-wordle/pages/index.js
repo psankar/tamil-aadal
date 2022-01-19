@@ -123,7 +123,7 @@ export default function Home({ word_length, server, error }) {
                                 </a>
                             </div>
                         </div>
-                        <Alert msg={alert.msg} status={alert.status} show={alert.show} onHide={() => updateAlert({...alert, show: false})}/>
+                        <Alert status={alert.status} show={alert.show} onHide={() => updateAlert({...alert, show: false})}>{alert.msg}</Alert>
                         
                         {error ? (
                             <div className="rounded bg-pink-300 bold">{error}</div>
