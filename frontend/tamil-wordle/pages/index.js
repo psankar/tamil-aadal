@@ -123,6 +123,7 @@ export default function Home({ word_length, server, error }) {
                                 </a>
                             </div>
                         </div>
+                        <Alert show={true} ><div className="bg-pink-100 p-2 underline text-blue-300"><a href="https://tamil-wordle-git-feature-uyirmei-tsureshkumar.vercel.app/">{IntlMsg.try_uyirmei}</a></div></Alert>
                         <Alert status={alert.status} show={alert.show} onHide={() => updateAlert({...alert, show: false})}>{alert.msg}</Alert>
                         
                         {error ? (
