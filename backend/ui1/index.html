@@ -3,6 +3,14 @@
 
   <head>
     <title>Tamil Wordle</title>
+    <style>
+      table,
+      th,
+      td {
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
+    </style>
   </head>
 
   <body>
@@ -12,10 +20,14 @@
     <button onclick="process()">சரி</button>
     <hr />
     <p>❤️ - சரியான எழுத்து</p>
-    <p>&#128584; - இல்லாத எழுத்து, கடல்லையே இல்லையாம்</p>
-    <p>&#128064; - தவறான இடத்தில் உள்ள சரியான எழுத்து</p>
+    <p>🙈 - இல்லாத எழுத்து, கடல்லையே இல்லையாம்</p>
+    <p>👀 - தவறான இடத்தில் உள்ள சரியான எழுத்து</p>
+    <p>🐣 - உயிர் எழுத்துப் பொருத்தம் (அ ஆ இ ஈ ...)</p>
+    <p>🏋️ - மெய் எழுத்துப் பொருத்தம் (க கா கி கீ ...)</p>
     <hr />
-    <div id="tilesDiv"></div>
+    <div>
+      <table id="tilesTable"></table>
+    </div>
     <hr />
     <div id="historyDiv"></div>
   </body>
@@ -50,7 +62,7 @@
       }
 
       const http = new XMLHttpRequest();
-      http.open("POST", "/verify-word");
+      http.open("POST", "/verify-word-with-uyirmei");
       http.setRequestHeader("Content-Type", "application/json");
       http.send(JSON.stringify(targetList));
 
@@ -61,12 +73,14 @@
               alert(
                 "சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள் !!! If you are interested, copy and paste the emoji table to social media."
               );
-              var tilesDiv = document.getElementById("tilesDiv");
-              var newLabel = document.createElement("Label");
+              var tilesTable = document.getElementById("tilesTable");
+              var row = tilesTable.insertRow();
+
               for (var i = 0; i < jsonResponse.length; i++) {
-                newLabel.innerHTML += " ❤️ ";
+                var cell = row.insertCell();
+                cell.innerHTML = " ❤️ ";
               }
-              tilesDiv.appendChild(newLabel);
+              document.getElementById("curword").value = "";
 
               return;
             case 200:
@@ -79,29 +93,40 @@
               historyDiv.appendChild(historyEntry);
               historyDiv.appendChild(historyBreak);
 
-              var tilesDiv = document.getElementById("tilesDiv");
-              var newLabel = document.createElement("Label");
+              var tilesTable = document.getElementById("tilesTable");
+              var row = tilesTable.insertRow();
 
               for (var i = 0; i < jsonResponse.length; i++) {
                 var resp = jsonResponse[i];
-                switch (resp) {
-                  case "LETTER_NOT_FOUND":
-                    newLabel.innerHTML += " &#128584; ";
-                    break;
-                  case "LETTER_ELSEWHERE":
-                    newLabel.innerHTML += " &#128064; ";
-                    break;
-                  case "LETTER_MATCHED":
-                    newLabel.innerHTML += " ❤️ ";
-                    break;
-                  default:
-                    alert("Error in game:", resp);
-                    break;
+                var cell = row.insertCell();
+
+                var cellBody = "";
+                for (var j = 0; j < resp.length; j++) {
+                  var msg = resp[j];
+                  switch (msg) {
+                    case "LETTER_NOT_FOUND":
+                      cellBody += "   🙈   ";
+                      break;
+                    case "LETTER_ELSEWHERE":
+                      cellBody += "   👀   ";
+                      break;
+                    case "LETTER_MATCHED":
+                      cellBody += "   ❤️   ";
+                      break;
+                    case "UYIR_MATCHED":
+                      cellBody += "   🐣   ";
+                      break;
+                    case "MEI_MATCHED":
+                      cellBody += "   🏋️   ";
+                      break;
+                    default:
+                      alert("Error in game:", msg);
+                      break;
+                  }
                 }
+                cell.innerHTML = cellBody;
               }
-              tilesDiv.appendChild(newLabel);
-              tilesBreak = document.createElement("br");
-              tilesDiv.appendChild(tilesBreak);
+              document.getElementById("curword").value = "";
               return;
             default:
               alert(http.responseText);
