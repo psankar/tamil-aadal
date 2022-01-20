@@ -16,6 +16,7 @@ import (
 	"time"
 	"unicode"
 
+	dao "example.com/tamil-wordle/dao"
 	jwt "github.com/golang-jwt/jwt/v4"
 )
 
@@ -47,7 +48,6 @@ const (
 
 var verifyKey *rsa.PublicKey
 var signKey *rsa.PrivateKey
-var userKey []byte
 
 func init() {
 	var empty struct{}
@@ -612,6 +612,7 @@ func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewEncoder(w).Encode(CurrentWordLenResponse{len(todayLetters)})
 	if err != nil {
+		log.Printf("failed to encode response: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 			http.StatusInternalServerError)
 		return
@@ -664,6 +665,7 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
+		log.Printf("failed to encode response: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 			http.StatusInternalServerError)
 		return
@@ -701,6 +703,7 @@ func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
+		log.Printf("failed to encode response: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 			http.StatusInternalServerError)
 		return
@@ -801,6 +804,7 @@ func generateAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 	// Create token string
 	token, err := t.SignedString(signKey)
 	if err != nil {
+		log.Printf("failed to generate token: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 			http.StatusInternalServerError)
 		return
@@ -837,6 +841,7 @@ func keyGenHandler(w http.ResponseWriter, r *http.Request) {
 	// Generate a key pair
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
+		log.Printf("failed to generate key pair: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 			http.StatusInternalServerError)
 		return
@@ -850,11 +855,15 @@ func keyGenHandler(w http.ResponseWriter, r *http.Request) {
 		Type:  "RSA PUBLIC KEY",
 		Bytes: x509.MarshalPKCS1PublicKey(publicKey.(*rsa.PublicKey)),
 	})
-	println(string(pubKeyPEM))
 
 	// Update public key in DB
-	// TODO Update in DB
-	userKey = pubKeyPEM
+	err = dao.UpdatePublicKey(userId, string(pubKeyPEM))
+	if err != nil {
+		log.Printf("failed to update public key: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
 
 	// Return private key
 	w.WriteHeader(http.StatusOK)
@@ -876,10 +885,19 @@ func addWordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO Update word in DB
-
+	var word dao.Word
+	word.Word = u["word"]
+	word.Date = u["date"]
+	word.UserId = u["userId"]
+	id, err := dao.AddWord(word)
+	if err != nil {
+		log.Printf("failed to add word: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்\n"+err.Error(),
+			http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	w.Write([]byte("Word added successfully with id: " + id))
 }
 
 func notHandledHandler(w http.ResponseWriter, r *http.Request) {
@@ -919,12 +937,17 @@ func jwtMiddleware(next http.Handler) http.Handler {
 
 		// Use user key for validation if userid is present; else use the admin public key
 		if userId != "" {
-			// TODO fetch user's public from DB
-			var err error
-			key, err = ParseRSAPublicKeyFromPEM(userKey)
+			user, err := dao.GetUser(userId)
+			if err != nil {
+				log.Println("Error getting user: ", err)
+				http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+					http.StatusInternalServerError)
+				return
+			}
+			key, err = ParseRSAPublicKeyFromPEM([]byte(user.PublicKey))
 
 			if err != nil {
-				println(err.Error())
+				log.Println("Error parsing user public key: ", err)
 				http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 					http.StatusInternalServerError)
 				return
