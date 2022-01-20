@@ -7,11 +7,11 @@ import (
 )
 
 func main() {
-	results, err := dao.ListUsers()
+	/*results, err := dao.ListUsers()
 	if err != nil {
 		log.Fatalf("Failed to list users: %v", err)
 	}
-	log.Printf("Users: %v", results)
+	log.Printf("Users: %v", results)*/
 
 	/*id, err := dao.CreateUser(dao.User{
 		Name:          "TestUser2",
@@ -33,13 +33,20 @@ func main() {
 	}
 	log.Printf("Updated public key")*/
 
-	word, err := dao.GetWordForTheDay("2022-01-19")
+	word, err := dao.GetWordForTheDay("2022-01-21")
 	if err != nil {
 		log.Fatalf("Failed to get word for the day: %v", err)
 	}
-	log.Printf("Word for the day: %s", word)
+	log.Printf("Word for the day: %v", word.User.Name)
 
-	id, err := dao.AddWord(dao.Word{
+	// should read from cache
+	word, err = dao.GetWordForTheDay("2022-01-22")
+	if err != nil {
+		log.Fatalf("Failed to get word for the day: %v", err)
+	}
+	log.Printf("Word for the day: %v", word.User.Name)
+
+	/*id, err := dao.AddWord(dao.Word{
 		Word:   "தமிழ்",
 		Date:   "2022-01-22",
 		UserId: "FKC1u8Us13YLdYnj3Wko",
@@ -47,5 +54,5 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to add word: %v", err)
 	}
-	log.Printf("Added word with id: %s", id)
+	log.Printf("Added word with id: %s", id)*/
 }

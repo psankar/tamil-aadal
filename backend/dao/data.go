@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	firestore "cloud.google.com/go/firestore"
@@ -25,8 +26,17 @@ type Word struct {
 	UserId string
 }
 
+type WordWrapper struct {
+	Id   string
+	Word Word
+	User User
+}
+
 const usersCollectionName = "users"
 const wordsCollectionName = "words"
+
+var wordMap = map[string]WordWrapper{}
+var userMap = map[string]User{}
 
 func openClient() (context.Context, *firestore.Client, error) {
 	ctx := context.Background()
@@ -151,6 +161,10 @@ func UpdatePublicKey(id string, publicKey string) error {
 }
 
 func GetUser(id string) (User, error) {
+	if user, ok := userMap[id]; ok {
+		log.Println("Found user in cache")
+		return user, nil
+	}
 	ctx, client, err := openClient()
 	if err != nil {
 		return User{}, err
@@ -164,6 +178,7 @@ func GetUser(id string) (User, error) {
 	var userObj User
 	doc.DataTo(&userObj)
 	userObj.Id = doc.Ref.ID
+	userMap[id] = userObj
 	return userObj, nil
 }
 
@@ -204,10 +219,14 @@ func AddWord(word Word) (string, error) {
 	return ref.ID, err
 }
 
-func GetWordForTheDay(date string) (Word, error) {
+func GetWordForTheDay(date string) (WordWrapper, error) {
+	if wordWrapper, ok := wordMap[date]; ok {
+		log.Println("Found word in cache")
+		return wordWrapper, nil
+	}
 	ctx, client, err := openClient()
 	if err != nil {
-		return Word{}, err
+		return WordWrapper{}, err
 	}
 	defer client.Close()
 
@@ -218,14 +237,21 @@ func GetWordForTheDay(date string) (Word, error) {
 			break
 		}
 		if err != nil {
-			return Word{}, fmt.Errorf("failed to iterate: %v", err)
+			return WordWrapper{}, fmt.Errorf("failed to iterate: %v", err)
 		}
 		var wordObj Word
 		doc.DataTo(&wordObj)
 		wordObj.Id = doc.Ref.ID
 		if wordObj.Word != "" {
-			return wordObj, nil
+			user, _ := GetUser(wordObj.UserId)
+			wordWrapper := WordWrapper{
+				Id:   wordObj.Id,
+				Word: wordObj,
+				User: user,
+			}
+			wordMap[date] = wordWrapper
+			return wordWrapper, nil
 		}
 	}
-	return Word{}, nil
+	return WordWrapper{}, nil
 }

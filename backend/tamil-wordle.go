@@ -604,6 +604,11 @@ type CurrentWordLenResponse struct {
 	Length int
 }
 
+type WordMetaResponse struct {
+	Length int
+	User   dao.User
+}
+
 func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w, r)
 	if r.Method == http.MethodOptions {
@@ -611,6 +616,43 @@ func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := json.NewEncoder(w).Encode(CurrentWordLenResponse{len(todayLetters)})
+	if err != nil {
+		log.Printf("failed to encode response: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+}
+
+func getWordMetaHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w, r)
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	// check if date param is present
+	date := r.URL.Query().Get("date")
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+
+	word, err := dao.GetWordForTheDay(date)
+	if err != nil || word.Id == "" {
+		log.Printf("failed to get word for the day: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+
+	wantLetters, err := splitWordGetLetters(word.Word.Word)
+	if err != nil {
+		log.Printf("failed to split word: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(WordMetaResponse{len(wantLetters), word.User})
 	if err != nil {
 		log.Printf("failed to encode response: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
@@ -633,7 +675,34 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(letters) != len(todayLetters) {
+	// check if date param is present
+	date := r.URL.Query().Get("date")
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+
+	word, err := dao.GetWordForTheDay(date)
+	if err != nil || word.Id == "" {
+		log.Printf("failed to get word for the day: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+
+	wantLetters, err := splitWordGetLetters(word.Word.Word)
+	if err != nil {
+		log.Printf("failed to split word: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+	var empty struct{}
+	wantLettersMap := make(map[string]struct{})
+	for _, letter := range wantLetters {
+		wantLettersMap[letter] = empty
+	}
+
+	if len(letters) != len(wantLetters) {
 		http.Error(w, "Invalid word length; சரியான நீளத்தில் அனுப்பவும்",
 			http.StatusBadRequest)
 		return
@@ -644,11 +713,11 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 	var response []string
 	for i := 0; i < len(letters); i++ {
 		// log.Printf("DEBUG: %q == %q", letters[i], todayLetters[i])
-		if letters[i] == todayLetters[i] {
+		if letters[i] == wantLetters[i] {
 			response = append(response, LetterMatched)
 		} else {
 			allMatched = false
-			if _, found := todayLettersMap[letters[i]]; found {
+			if _, found := wantLettersMap[letters[i]]; found {
 				response = append(response, LetterElseWhere)
 			} else {
 				response = append(response, LetterNotFound)
@@ -686,13 +755,35 @@ func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(letters) != len(todayLetters) {
+	// check if date param is present
+	date := r.URL.Query().Get("date")
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+
+	word, err := dao.GetWordForTheDay(date)
+	if err != nil || word.Id == "" {
+		log.Printf("failed to get word for the day: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+
+	wantLetters, err := splitWordGetLetters(word.Word.Word)
+	if err != nil {
+		log.Printf("failed to split word: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+
+	if len(letters) != len(wantLetters) {
 		http.Error(w, "Invalid word length; சரியான நீளத்தில் அனுப்பவும்",
 			http.StatusBadRequest)
 		return
 	}
 
-	response, allMatched := verifyWordWithUyirMei(letters, todayLetters)
+	response, allMatched := verifyWordWithUyirMei(letters, wantLetters)
 
 	w.Header().Set("Content-Type", "application/json")
 	if allMatched {
@@ -1057,6 +1148,7 @@ func main() {
 	log.Print("starting server...")
 
 	http.HandleFunc("/get-current-word-len", getCurrentWordLenHandler)
+	http.HandleFunc("/get-word-meta", getWordMetaHandler)
 	http.HandleFunc("/verify-word", verifyWordHandler)
 	http.HandleFunc("/verify-word-with-uyirmei", verifyWordWithUyirMeiHandler)
 
