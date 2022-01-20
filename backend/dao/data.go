@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"fmt"
+	"time"
 
 	firestore "cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go/v4"
@@ -181,6 +182,15 @@ func AddWord(word Word) (string, error) {
 	}
 	if w.Id != "" {
 		err = fmt.Errorf("word already exists for the day")
+		return "", err
+	}
+
+	// Disable setting word for t+2
+	t := time.Now().Format("2006-01-02")
+	t1 := time.Now().Add(time.Hour * 24).Format("2006-01-02")
+	t2 := time.Now().Add(time.Hour * 48).Format("2006-01-02")
+	if t != word.Date && t1 != word.Date && t2 != word.Date {
+		err = fmt.Errorf("word can only be set for today or tomorrow or day after tomorrow")
 		return "", err
 	}
 
