@@ -713,6 +713,12 @@ func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
 func verifyWordWithUyirMei(gotLetters []string,
 	wantLetters []string) ([][]string, bool) {
 
+	var empty struct{}
+	wantLettersMap := make(map[string]struct{})
+	for _, letter := range wantLetters {
+		wantLettersMap[letter] = empty
+	}
+
 	allMatched := true
 
 	var response [][]string
@@ -726,7 +732,7 @@ func verifyWordWithUyirMei(gotLetters []string,
 
 		allMatched = false
 
-		if _, found := todayLettersMap[letter]; found {
+		if _, found := wantLettersMap[letter]; found {
 			curLetterResponse = []string{LetterElseWhere}
 		} else {
 			curLetterResponse = []string{LetterNotFound}
