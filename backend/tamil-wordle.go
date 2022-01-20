@@ -905,6 +905,62 @@ func notHandledHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Not yet implemented"))
 }
 
+func createUserHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w, r)
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	// Get user from request body
+	var u dao.User
+	err := json.NewDecoder(r.Body).Decode(&u)
+	if err != nil {
+		log.Println("failed to decode user: ", err)
+		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்",
+			http.StatusBadRequest)
+		return
+	}
+
+	// Create user
+	id, err := dao.CreateUser(u)
+	if err != nil {
+		log.Println("failed to create user: ", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(id))
+}
+
+func markUserActiveHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w, r)
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	// Get user from request body
+	var userId string
+	err := json.NewDecoder(r.Body).Decode(&userId)
+	if err != nil {
+		log.Println("failed to decode userId: ", err)
+		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்",
+			http.StatusBadRequest)
+		return
+	}
+
+	// Mark user active
+	err = dao.MarkUserActive(userId)
+	if err != nil {
+		log.Println("failed to mark user active: ", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("User marked active successfully"))
+}
+
 // jwt.ParseRSAPublicKeyFromPEM has a bug in it, so we need to do it ourselves
 // https://github.com/golang-jwt/jwt/issues/119
 // ParseRSAPublicKeyFromPEM parses a PEM encoded PKCS1 public key
@@ -942,6 +998,11 @@ func jwtMiddleware(next http.Handler) http.Handler {
 				log.Println("Error getting user: ", err)
 				http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 					http.StatusInternalServerError)
+				return
+			}
+			if user.Active == false {
+				log.Println("User is not active")
+				http.Error(w, "User is not active", http.StatusUnauthorized)
 				return
 			}
 			key, err = ParseRSAPublicKeyFromPEM([]byte(user.PublicKey))
@@ -1000,9 +1061,9 @@ func main() {
 	http.Handle("/ui2/", http.StripPrefix("/ui2/", ui2))
 	http.Handle("/ui3/", http.StripPrefix("/ui3/", ui3))
 
-	http.HandleFunc("/admin/create-user", notHandledHandler)
+	http.Handle("/admin/create-user", jwtMiddleware(http.HandlerFunc(createUserHandler)))
 	http.Handle("/admin/generate-auth-token", jwtMiddleware(http.HandlerFunc(generateAuthTokenHandler)))
-	http.HandleFunc("/admin/mark-user-active", notHandledHandler)
+	http.Handle("/admin/mark-user-active", jwtMiddleware(http.HandlerFunc(markUserActiveHandler)))
 	http.Handle("/user/download-private-key", jwtMiddleware(http.HandlerFunc(keyGenHandler)))
 	http.Handle("/user/add-word", jwtMiddleware(http.HandlerFunc(addWordHandler)))
 
