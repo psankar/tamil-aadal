@@ -149,6 +149,23 @@ func UpdatePublicKey(id string, publicKey string) error {
 	return nil
 }
 
+func GetUser(id string) (User, error) {
+	ctx, client, err := openClient()
+	if err != nil {
+		return User{}, err
+	}
+	defer client.Close()
+
+	doc, err := client.Collection(usersCollectionName).Doc(id).Get(ctx)
+	if err != nil {
+		return User{}, fmt.Errorf("failed to get user: %v", err)
+	}
+	var userObj User
+	doc.DataTo(&userObj)
+	userObj.Id = doc.Ref.ID
+	return userObj, nil
+}
+
 func AddWord(word Word) (string, error) {
 	ctx, client, err := openClient()
 	if err != nil {
