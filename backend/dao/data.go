@@ -93,6 +93,7 @@ func CreateUser(user User) (string, error) {
 		err = fmt.Errorf("failed to add user: %v", err)
 		return "", err
 	}
+	userMap[user.Id] = user
 	return ref.ID, err
 }
 
@@ -121,6 +122,7 @@ func MarkUserActive(id string) error {
 		if err != nil {
 			return fmt.Errorf("failed to inactivate existing active user: %v", err)
 		}
+		userMap[userObj.Id] = userObj
 	}
 
 	// Activate current user
@@ -136,6 +138,7 @@ func MarkUserActive(id string) error {
 	if err != nil {
 		return fmt.Errorf("failed to activate user: %v", err)
 	}
+	userMap[userObj.Id] = userObj
 	return nil
 }
 
@@ -157,6 +160,7 @@ func UpdatePublicKey(id string, publicKey string) error {
 	if err != nil {
 		return fmt.Errorf("failed to update public key: %v", err)
 	}
+	userMap[id] = userObj
 	return nil
 }
 
@@ -216,6 +220,13 @@ func AddWord(word Word) (string, error) {
 		err = fmt.Errorf("failed to add word: %v", err)
 		return "", err
 	}
+	user, _ := GetUser(word.UserId)
+	wordWrapper := WordWrapper{
+		Id:   word.Id,
+		Word: word,
+		User: user,
+	}
+	wordMap[word.Date] = wordWrapper
 	return ref.ID, err
 }
 
