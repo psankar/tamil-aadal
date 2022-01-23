@@ -4,7 +4,7 @@ WORKDIR /app
 
 ADD * ./
 
-RUN go build -o /tamil-wordle
+RUN go build -o /tamil-aadal
 
 # Build section completed
 
@@ -13,11 +13,11 @@ FROM gcr.io/distroless/base-debian10
 
 WORKDIR /
 
-COPY --from=build /tamil-wordle /tamil-wordle
+COPY --from=build /tamil-aadal /tamil-aadal
 ADD ui1 /ui1
 ADD ui2 /ui2
 ADD ui3 /ui3
 
 USER nonroot:nonroot
 
-ENTRYPOINT ["/tamil-wordle"]
+ENTRYPOINT ["/tamil-aadal"]
