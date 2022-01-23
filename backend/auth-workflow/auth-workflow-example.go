@@ -61,7 +61,7 @@ func main() {
 	// 5. Magic url will use the token to generate & download private key to local storage
 	// 6. Magic url will take the user to the page for adding new words
 
-	// Note: Admin has to generae a new magic url
+	// Note: Admin has to generae a new magic url if the user wants to use a different machine / browser
 }
 
 func createUser(user dao.User) string {
