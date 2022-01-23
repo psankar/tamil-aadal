@@ -78,6 +78,8 @@
           userId: userId,
           word: word,
           date: date,
+          userName: localStorage.getItem('userName'),
+          twitterHandle: localStorage.getItem('twitterHandle'),
         })
       );
       document.getElementById('result').innerHTML = 'Adding word...';

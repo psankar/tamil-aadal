@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	firestore "cloud.google.com/go/firestore"
@@ -19,22 +20,16 @@ type User struct {
 }
 
 type Word struct {
-	Id     string
-	Word   string
-	Date   string
-	UserId string
-}
-
-type WordWrapper struct {
 	Id   string
-	Word Word
+	Word string
+	Date string
 	User User
 }
 
 const usersCollectionName = "users"
 const wordsCollectionName = "words"
 
-var wordMap = map[string]WordWrapper{}
+var wordMap = map[string]Word{}
 var userMap = map[string]User{}
 
 func openClient() (context.Context, *firestore.Client, error) {
@@ -219,24 +214,18 @@ func AddWord(word Word) (string, error) {
 		err = fmt.Errorf("failed to add word: %v", err)
 		return "", err
 	}
-	user, _ := GetUser(word.UserId)
-	wordWrapper := WordWrapper{
-		Id:   word.Id,
-		Word: word,
-		User: user,
-	}
-	wordMap[word.Date] = wordWrapper
+	wordMap[word.Date] = word
 	return ref.ID, err
 }
 
-func GetWordForTheDay(date string) (WordWrapper, error) {
-	/*if wordWrapper, ok := wordMap[date]; ok {
+func GetWordForTheDay(date string) (Word, error) {
+	if word, ok := wordMap[date]; ok {
 		log.Println("Found word in cache")
-		return wordWrapper, nil
-	}*/
+		return word, nil
+	}
 	ctx, client, err := openClient()
 	if err != nil {
-		return WordWrapper{}, err
+		return Word{}, err
 	}
 	defer client.Close()
 
@@ -247,21 +236,15 @@ func GetWordForTheDay(date string) (WordWrapper, error) {
 			break
 		}
 		if err != nil {
-			return WordWrapper{}, fmt.Errorf("failed to iterate: %v", err)
+			return Word{}, fmt.Errorf("failed to iterate: %v", err)
 		}
-		var wordObj Word
-		doc.DataTo(&wordObj)
-		wordObj.Id = doc.Ref.ID
-		if wordObj.Word != "" {
-			user, _ := GetUser(wordObj.UserId)
-			wordWrapper := WordWrapper{
-				Id:   wordObj.Id,
-				Word: wordObj,
-				User: user,
-			}
-			wordMap[date] = wordWrapper
-			return wordWrapper, nil
+		var word Word
+		doc.DataTo(&word)
+		word.Id = doc.Ref.ID
+		if word.Word != "" {
+			wordMap[word.Date] = word
+			return word, nil
 		}
 	}
-	return WordWrapper{}, nil
+	return Word{}, nil
 }

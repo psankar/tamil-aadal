@@ -173,14 +173,14 @@
             if (jsonResponse.User.TwitterHandle) {
               userStr +=
                 "<a href='https://twitter.com/" +
-                jsonResponse.User.Name +
+                jsonResponse.User.TwitterHandle +
                 "' target='_blank'>" +
                 jsonResponse.User.Name +
                 '</a>';
             } else {
               userStr += jsonResponse.User.Name;
             }
-            userLabel.innerText = 'Word set by ' + userStr;
+            userLabel.innerHTML = 'Word set by ' + userStr;
           } else {
             userLabel.innerText = 'Word set by Anonymous';
           }

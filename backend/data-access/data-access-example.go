@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	dao "./dao"
+	dao "tamilaadal.com/backend/dao"
 )
 
 func main() {
@@ -33,18 +33,18 @@ func main() {
 	}
 	log.Printf("Updated public key")*/
 
-	word, err := dao.GetWordForTheDay("2022-01-21")
+	word, err := dao.GetWordForTheDay("2022-01-23")
 	if err != nil {
 		log.Fatalf("Failed to get word for the day: %v", err)
 	}
-	log.Printf("Word for the day: %v", word.User.Name)
+	log.Printf("Word for the day: %v %v", word.Word, word.User.Name)
 
 	// should read from cache
-	word, err = dao.GetWordForTheDay("2022-01-22")
+	word, err = dao.GetWordForTheDay("2022-01-23")
 	if err != nil {
 		log.Fatalf("Failed to get word for the day: %v", err)
 	}
-	log.Printf("Word for the day: %v", word.User.Name)
+	log.Printf("Word for the day: %v %v", word.Word, word.User.Name)
 
 	/*id, err := dao.AddWord(dao.Word{
 		Word:   "தமிழ்",

@@ -644,7 +644,7 @@ func getWordMetaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wantLetters, err := splitWordGetLetters(word.Word.Word)
+	wantLetters, err := splitWordGetLetters(word.Word)
 	if err != nil {
 		log.Printf("failed to split word: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
@@ -689,7 +689,7 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wantLetters, err := splitWordGetLetters(word.Word.Word)
+	wantLetters, err := splitWordGetLetters(word.Word)
 	if err != nil {
 		log.Printf("failed to split word: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
@@ -769,7 +769,7 @@ func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wantLetters, err := splitWordGetLetters(word.Word.Word)
+	wantLetters, err := splitWordGetLetters(word.Word)
 	if err != nil {
 		log.Printf("failed to split word: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
@@ -1016,7 +1016,13 @@ func addWordHandler(w http.ResponseWriter, r *http.Request) {
 	var word dao.Word
 	word.Word = u["word"]
 	word.Date = u["date"]
-	word.UserId = u["userId"]
+
+	var user dao.User
+	user.Id = u["userId"]
+	user.Name = u["userName"]
+	user.TwitterHandle = u["twitterHandle"]
+	word.User = user
+
 	id, err := dao.AddWord(word)
 	if err != nil {
 		log.Printf("failed to add word: %s", err)
