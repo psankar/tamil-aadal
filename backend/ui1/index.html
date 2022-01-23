@@ -16,6 +16,7 @@
   <body>
     <label id="lengthLabel"></label> எழுத்து(க்)கள் அளவு நீளமான தமிழ்ச்சொல்லை,
     தமிழில் தட்டச்சு செய்து, 'சரி' பொத்தானை அழுத்தவும் <br />
+    <label id="userLabel"></label><br />
     <input type="text" id="curword" />
     <button onclick="process()">சரி</button>
     <hr />
@@ -34,23 +35,23 @@
 
   <script>
     function process() {
-      var str = document.getElementById("curword").value.trim();
+      var str = document.getElementById('curword').value.trim();
 
       var diacritics = {
-        "\u0B82": true,
-        "\u0BBE": true,
-        "\u0BBF": true,
-        "\u0BC0": true,
-        "\u0BC1": true,
-        "\u0BC2": true,
-        "\u0BC6": true,
-        "\u0BC7": true,
-        "\u0BC8": true,
-        "\u0BCA": true,
-        "\u0BCB": true,
-        "\u0BCC": true,
-        "\u0BCD": true,
-        "\u0BD7": true,
+        '\u0B82': true,
+        '\u0BBE': true,
+        '\u0BBF': true,
+        '\u0BC0': true,
+        '\u0BC1': true,
+        '\u0BC2': true,
+        '\u0BC6': true,
+        '\u0BC7': true,
+        '\u0BC8': true,
+        '\u0BCA': true,
+        '\u0BCB': true,
+        '\u0BCC': true,
+        '\u0BCD': true,
+        '\u0BD7': true,
       };
 
       var targetList = [];
@@ -62,8 +63,8 @@
       }
 
       const http = new XMLHttpRequest();
-      http.open("POST", "/verify-word-with-uyirmei");
-      http.setRequestHeader("Content-Type", "application/json");
+      http.open('POST', '/verify-word-with-uyirmei?date=' + getDate());
+      http.setRequestHeader('Content-Type', 'application/json');
       http.send(JSON.stringify(targetList));
 
       http.onreadystatechange = (e) => {
@@ -71,62 +72,62 @@
           switch (http.status) {
             case 202:
               alert(
-                "சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள் !!! If you are interested, copy and paste the emoji table to social media."
+                'சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள் !!! If you are interested, copy and paste the emoji table to social media.'
               );
-              var tilesTable = document.getElementById("tilesTable");
+              var tilesTable = document.getElementById('tilesTable');
               var row = tilesTable.insertRow();
 
               for (var i = 0; i < jsonResponse.length; i++) {
                 var cell = row.insertCell();
-                cell.innerHTML = " ❤️ ";
+                cell.innerHTML = ' ❤️ ';
               }
-              document.getElementById("curword").value = "";
+              document.getElementById('curword').value = '';
 
               return;
             case 200:
               jsonResponse = JSON.parse(http.responseText);
 
-              var historyDiv = document.getElementById("historyDiv");
-              var historyEntry = document.createElement("Label");
+              var historyDiv = document.getElementById('historyDiv');
+              var historyEntry = document.createElement('Label');
               historyEntry.innerHTML = str;
-              var historyBreak = document.createElement("br");
+              var historyBreak = document.createElement('br');
               historyDiv.appendChild(historyEntry);
               historyDiv.appendChild(historyBreak);
 
-              var tilesTable = document.getElementById("tilesTable");
+              var tilesTable = document.getElementById('tilesTable');
               var row = tilesTable.insertRow();
 
               for (var i = 0; i < jsonResponse.length; i++) {
                 var resp = jsonResponse[i];
                 var cell = row.insertCell();
 
-                var cellBody = "";
+                var cellBody = '';
                 for (var j = 0; j < resp.length; j++) {
                   var msg = resp[j];
                   switch (msg) {
-                    case "LETTER_NOT_FOUND":
-                      cellBody += "   🙈   ";
+                    case 'LETTER_NOT_FOUND':
+                      cellBody += '   🙈   ';
                       break;
-                    case "LETTER_ELSEWHERE":
-                      cellBody += "   👀   ";
+                    case 'LETTER_ELSEWHERE':
+                      cellBody += '   👀   ';
                       break;
-                    case "LETTER_MATCHED":
-                      cellBody += "   ❤️   ";
+                    case 'LETTER_MATCHED':
+                      cellBody += '   ❤️   ';
                       break;
-                    case "UYIR_MATCHED":
-                      cellBody += "   🐣   ";
+                    case 'UYIR_MATCHED':
+                      cellBody += '   🐣   ';
                       break;
-                    case "MEI_MATCHED":
-                      cellBody += "   🏋️   ";
+                    case 'MEI_MATCHED':
+                      cellBody += '   🏋️   ';
                       break;
                     default:
-                      alert("Error in game:", msg);
+                      alert('Error in game:', msg);
                       break;
                   }
                 }
                 cell.innerHTML = cellBody;
               }
-              document.getElementById("curword").value = "";
+              document.getElementById('curword').value = '';
               return;
             default:
               alert(http.responseText);
@@ -136,22 +137,42 @@
       };
     }
 
+    function getDate() {
+      var currentDate = new Date().toISOString().split('T')[0];
+      var url = window.location.href;
+      var dateParam = /date=([^&]+)/.exec(url);
+      var date = dateParam ? dateParam[1] : currentDate;
+
+      if (date > currentDate) {
+        date = currentDate;
+        window.history.replaceState(null, null, '?date=' + date);
+      }
+      return date;
+    }
+
     function loadLen() {
       const http = new XMLHttpRequest();
-      http.open("GET", "/get-current-word-len");
+      http.open('GET', '/get-word-meta?date=' + getDate());
       http.onreadystatechange = (e) => {
         if (http.readyState === XMLHttpRequest.DONE) {
           var status = http.status;
 
           if (status !== 200) {
-            console.log("some error happened", http.status);
-            alert("Error loading the game!");
+            console.log('some error happened', http.status);
+            alert('Error loading the game!');
             return;
           }
 
           var jsonResponse = JSON.parse(http.responseText);
-          var lengthLabel = document.getElementById("lengthLabel");
+          var lengthLabel = document.getElementById('lengthLabel');
           lengthLabel.innerText = jsonResponse.Length;
+
+          var userLabel = document.getElementById('userLabel');
+          if (jsonResponse.User) {
+            userLabel.innerText = 'Word set by ' + jsonResponse.User.Name;
+          } else {
+            userLabel.innerText = 'Word set by Anonymous';
+          }
         }
       };
       http.send();

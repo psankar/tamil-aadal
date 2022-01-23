@@ -1,0 +1,120 @@
+<html>
+  <meta charset="UTF-8" />
+
+  <head>
+    <title>Tamil Wordle</title>
+    <style>
+      label {
+        margin-right: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    User
+    <input type="text" id="user" placeholder="Your user id" />
+    <hr />
+    <b>Generate the key pair</b><br />
+    <textarea
+      id="token"
+      rows="10"
+      cols="80"
+      placeholder="Paste the token received from admin"
+    ></textarea
+    ><br />
+    <button onclick="generateKeyPair()">Generate</button>
+    <div id="keyPair"></div>
+    <hr />
+    <b>Add word</b><br />
+    <textarea
+      id="privateKey"
+      rows="10"
+      cols="80"
+      placeholder="Paste your private key"
+    ></textarea
+    ><br /><br />
+    <label>Word</label
+    ><input type="text" id="word" placeholder="Enter the word" /><br />
+    <label>Date </label
+    ><input
+      type="text"
+      id="date"
+      placeholder="Date in yyyy-mm-dd format"
+    /><br />
+    <button onclick="addWord()">Add</button>
+    <div id="result"></div>
+  </body>
+  <script>
+    function generateKeyPair() {
+      var token = document.getElementById('token').value;
+      var userId = document.getElementById('user').value;
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/user/download-private-key', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      xhr.onload = function () {
+        if (this.status == 200) {
+          var privateKey = this.responseText;
+          document.getElementById('privateKey').value = privateKey;
+          document.getElementById('keyPair').innerHTML =
+            '<b>Private key</b><br />' +
+            privateKey +
+            '<br /><br />Copy this and keep this secret';
+        } else {
+          document.getElementById('keyPair').innerHTML =
+            'Error in fetching key pair. Try again or reach out to admin';
+        }
+      };
+      xhr.send('"' + userId + '"');
+    }
+
+    function addWord() {
+      var privateKey = document.getElementById('privateKey').value;
+      var userId = document.getElementById('user').value;
+      var word = document.getElementById('word').value;
+      var date = document.getElementById('date').value;
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/user/add-word', true);
+
+      // generate JWT token
+      var oHeader = {
+        alg: 'RS512',
+        typ: 'JWT',
+      };
+      // Payload
+      var oPayload = {};
+      var tNow = KJUR.jws.IntDate.get('now');
+      var tEnd = KJUR.jws.IntDate.get('now + 1day');
+      oPayload.iss = 'tamilaadal-admin';
+      oPayload.exp = tEnd;
+      oPayload.aud = 'tamilaadal';
+      // Sign JWT
+      var keyObj = KEYUTIL.getKey(privateKey);
+      var sHeader = JSON.stringify(oHeader);
+      var sPayload = JSON.stringify(oPayload);
+      var sJWT = KJUR.jws.JWS.sign('RS512', sHeader, sPayload, keyObj);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + sJWT);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('x-user-id', userId);
+      xhr.onload = function () {
+        if (this.status == 200) {
+          document.getElementById('result').innerHTML = this.responseText;
+        } else {
+          document.getElementById('result').innerHTML =
+            'Error: ' + this.responseText;
+        }
+      };
+      xhr.send(
+        JSON.stringify({
+          userId: userId,
+          word: word,
+          date: date,
+        })
+      );
+    }
+  </script>
+  <script
+    language="JavaScript"
+    type="text/javascript"
+    src="http://kjur.github.io/jsrsasign/jsrsasign-latest-all-min.js"
+  ></script>
+</html>

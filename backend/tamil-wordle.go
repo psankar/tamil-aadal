@@ -1,12 +1,23 @@
 package main
 
 import (
+	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 	"unicode"
+
+	dao "example.com/tamil-wordle/dao"
+	jwt "github.com/golang-jwt/jwt/v4"
 )
 
 func getWordForToday() string {
@@ -26,6 +37,17 @@ var todayLettersMap map[string]struct{}
 var isDiacritic map[rune]struct{}
 
 var uyirMap, meiMap map[string]string
+
+const pubKeyPath = "auth/admin.rsa.pub"
+const privKeyPath = "auth/admin.rsa"
+
+const (
+	Issuer   = "tamilaadal-admin"
+	Audience = "tamilaadal"
+)
+
+var verifyKey *rsa.PublicKey
+var signKey *rsa.PrivateKey
 
 func init() {
 	var empty struct{}
@@ -554,10 +576,37 @@ func init() {
 		"னோ": "ன்",
 		"னௌ": "ன்",
 	}
+
+	verifyBytes, err := ioutil.ReadFile(pubKeyPath)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	verifyKey, err = jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	signBytes, err := ioutil.ReadFile(privKeyPath)
+	if err != nil {
+		log.Fatalf("failed to read private key: %s", err)
+	}
+
+	signKey, err = jwt.ParseRSAPrivateKeyFromPEM(signBytes)
+	if err != nil {
+		log.Fatalf("failed to parse private key: %s", err)
+	}
 }
 
 type CurrentWordLenResponse struct {
 	Length int
+}
+
+type WordMetaResponse struct {
+	Length int
+	User   dao.User
 }
 
 func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
@@ -568,6 +617,44 @@ func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewEncoder(w).Encode(CurrentWordLenResponse{len(todayLetters)})
 	if err != nil {
+		log.Printf("failed to encode response: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+}
+
+func getWordMetaHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w, r)
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	// check if date param is present
+	date := r.URL.Query().Get("date")
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+
+	word, err := dao.GetWordForTheDay(date)
+	if err != nil || word.Id == "" {
+		log.Printf("failed to get word for the day: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+
+	wantLetters, err := splitWordGetLetters(word.Word.Word)
+	if err != nil {
+		log.Printf("failed to split word: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(WordMetaResponse{len(wantLetters), word.User})
+	if err != nil {
+		log.Printf("failed to encode response: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 			http.StatusInternalServerError)
 		return
@@ -588,7 +675,34 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(letters) != len(todayLetters) {
+	// check if date param is present
+	date := r.URL.Query().Get("date")
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+
+	word, err := dao.GetWordForTheDay(date)
+	if err != nil || word.Id == "" {
+		log.Printf("failed to get word for the day: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+
+	wantLetters, err := splitWordGetLetters(word.Word.Word)
+	if err != nil {
+		log.Printf("failed to split word: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+	var empty struct{}
+	wantLettersMap := make(map[string]struct{})
+	for _, letter := range wantLetters {
+		wantLettersMap[letter] = empty
+	}
+
+	if len(letters) != len(wantLetters) {
 		http.Error(w, "Invalid word length; சரியான நீளத்தில் அனுப்பவும்",
 			http.StatusBadRequest)
 		return
@@ -599,11 +713,11 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 	var response []string
 	for i := 0; i < len(letters); i++ {
 		// log.Printf("DEBUG: %q == %q", letters[i], todayLetters[i])
-		if letters[i] == todayLetters[i] {
+		if letters[i] == wantLetters[i] {
 			response = append(response, LetterMatched)
 		} else {
 			allMatched = false
-			if _, found := todayLettersMap[letters[i]]; found {
+			if _, found := wantLettersMap[letters[i]]; found {
 				response = append(response, LetterElseWhere)
 			} else {
 				response = append(response, LetterNotFound)
@@ -620,6 +734,7 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
+		log.Printf("failed to encode response: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 			http.StatusInternalServerError)
 		return
@@ -640,13 +755,35 @@ func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(letters) != len(todayLetters) {
+	// check if date param is present
+	date := r.URL.Query().Get("date")
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+
+	word, err := dao.GetWordForTheDay(date)
+	if err != nil || word.Id == "" {
+		log.Printf("failed to get word for the day: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+
+	wantLetters, err := splitWordGetLetters(word.Word.Word)
+	if err != nil {
+		log.Printf("failed to split word: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+
+	if len(letters) != len(wantLetters) {
 		http.Error(w, "Invalid word length; சரியான நீளத்தில் அனுப்பவும்",
 			http.StatusBadRequest)
 		return
 	}
 
-	response, allMatched := verifyWordWithUyirMei(letters, todayLetters)
+	response, allMatched := verifyWordWithUyirMei(letters, wantLetters)
 
 	w.Header().Set("Content-Type", "application/json")
 	if allMatched {
@@ -657,6 +794,7 @@ func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
+		log.Printf("failed to encode response: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 			http.StatusInternalServerError)
 		return
@@ -665,6 +803,12 @@ func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
 
 func verifyWordWithUyirMei(gotLetters []string,
 	wantLetters []string) ([][]string, bool) {
+
+	var empty struct{}
+	wantLettersMap := make(map[string]struct{})
+	for _, letter := range wantLetters {
+		wantLettersMap[letter] = empty
+	}
 
 	allMatched := true
 
@@ -679,7 +823,7 @@ func verifyWordWithUyirMei(gotLetters []string,
 
 		allMatched = false
 
-		if _, found := todayLettersMap[letter]; found {
+		if _, found := wantLettersMap[letter]; found {
 			curLetterResponse = []string{LetterElseWhere}
 		} else {
 			curLetterResponse = []string{LetterNotFound}
@@ -726,6 +870,273 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/ui1", http.StatusSeeOther)
 }
 
+func generateAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w, r)
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	var userID string
+	err := json.NewDecoder(r.Body).Decode(&userID)
+	if err != nil {
+		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்",
+			http.StatusBadRequest)
+		return
+	}
+
+	// create a signer for rsa 512
+	t := jwt.New(jwt.GetSigningMethod("RS512"))
+
+	// set our claims
+	t.Claims =
+		&jwt.StandardClaims{
+			// set the expire time
+			// see http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-20#section-4.1.4
+			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
+			Issuer:    Issuer,
+			Audience:  Audience,
+			Subject:   userID,
+		}
+
+	// Create token string
+	token, err := t.SignedString(signKey)
+	if err != nil {
+		log.Printf("failed to generate token: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(token))
+}
+
+func keyGenHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w, r)
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	// valid sub claim from JWT with the request body
+	props, _ := r.Context().Value("props").(jwt.MapClaims)
+	userId := props["sub"].(string)
+
+	// Get user from request body
+	var u string
+	err := json.NewDecoder(r.Body).Decode(&u)
+	if err != nil {
+		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்",
+			http.StatusBadRequest)
+		return
+	}
+	if userId != u {
+		http.Error(w, "Unauthorized; உங்கள் புகுபதிகை தவறானது",
+			http.StatusUnauthorized)
+		return
+	}
+
+	// Generate a key pair
+	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		log.Printf("failed to generate key pair: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+	publicKey := privateKey.Public()
+	keyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	})
+	pubKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: x509.MarshalPKCS1PublicKey(publicKey.(*rsa.PublicKey)),
+	})
+
+	// Update public key in DB
+	err = dao.UpdatePublicKey(userId, string(pubKeyPEM))
+	if err != nil {
+		log.Printf("failed to update public key: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+
+	// Return private key
+	w.WriteHeader(http.StatusOK)
+	w.Write(keyPEM)
+}
+
+func addWordHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w, r)
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	// Get user from request body
+	var u map[string]string
+	err := json.NewDecoder(r.Body).Decode(&u)
+	if err != nil {
+		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்",
+			http.StatusBadRequest)
+		return
+	}
+
+	var word dao.Word
+	word.Word = u["word"]
+	word.Date = u["date"]
+	word.UserId = u["userId"]
+	id, err := dao.AddWord(word)
+	if err != nil {
+		log.Printf("failed to add word: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்\n"+err.Error(),
+			http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Word added successfully with id: " + id))
+}
+
+func notHandledHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Not yet implemented"))
+}
+
+func createUserHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w, r)
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	// Get user from request body
+	var u dao.User
+	err := json.NewDecoder(r.Body).Decode(&u)
+	if err != nil {
+		log.Println("failed to decode user: ", err)
+		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்",
+			http.StatusBadRequest)
+		return
+	}
+
+	// Create user
+	id, err := dao.CreateUser(u)
+	if err != nil {
+		log.Println("failed to create user: ", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(id))
+}
+
+func markUserActiveHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w, r)
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	// Get user from request body
+	var userId string
+	err := json.NewDecoder(r.Body).Decode(&userId)
+	if err != nil {
+		log.Println("failed to decode userId: ", err)
+		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்",
+			http.StatusBadRequest)
+		return
+	}
+
+	// Mark user active
+	err = dao.MarkUserActive(userId)
+	if err != nil {
+		log.Println("failed to mark user active: ", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("User marked active successfully"))
+}
+
+// jwt.ParseRSAPublicKeyFromPEM has a bug in it, so we need to do it ourselves
+// https://github.com/golang-jwt/jwt/issues/119
+// ParseRSAPublicKeyFromPEM parses a PEM encoded PKCS1 public key
+func ParseRSAPublicKeyFromPEM(key []byte) (*rsa.PublicKey, error) {
+	var err error
+
+	// Parse PEM block
+	var block *pem.Block
+	if block, _ = pem.Decode(key); block == nil {
+		return nil, fmt.Errorf("key must be PEM encoded")
+	}
+
+	// Parse the key
+	var parsedKey interface{}
+	if parsedKey, err = x509.ParsePKCS1PublicKey(block.Bytes); err != nil {
+		if cert, err := x509.ParseCertificate(block.Bytes); err == nil {
+			parsedKey = cert.PublicKey
+		} else {
+			return nil, err
+		}
+	}
+	return parsedKey.(*rsa.PublicKey), nil
+}
+
+func jwtMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Get user from header
+		userId := r.Header.Get("x-user-id")
+		key := verifyKey
+
+		// Use user key for validation if userid is present; else use the admin public key
+		if userId != "" {
+			user, err := dao.GetUser(userId)
+			if err != nil {
+				log.Println("Error getting user: ", err)
+				http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+					http.StatusInternalServerError)
+				return
+			}
+			if user.Active == false {
+				log.Println("User is not active")
+				http.Error(w, "User is not active", http.StatusUnauthorized)
+				return
+			}
+			key, err = ParseRSAPublicKeyFromPEM([]byte(user.PublicKey))
+
+			if err != nil {
+				log.Println("Error parsing user public key: ", err)
+				http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+					http.StatusInternalServerError)
+				return
+			}
+		}
+
+		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
+		if len(authHeader) != 2 {
+			fmt.Println("Malformed token")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("Malformed Token"))
+		} else {
+			jwtToken := authHeader[1]
+			token, err := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
+				return key, nil
+			})
+
+			if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+				ctx := context.WithValue(r.Context(), "props", claims)
+				// Access context values in handlers like this
+				// props, _ := r.Context().Value("props").(jwt.MapClaims)
+				next.ServeHTTP(w, r.WithContext(ctx))
+			} else {
+				fmt.Println(err)
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte("Unauthorized"))
+			}
+		}
+	})
+}
+
 func enableCORS(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
@@ -737,6 +1148,7 @@ func main() {
 	log.Print("starting server...")
 
 	http.HandleFunc("/get-current-word-len", getCurrentWordLenHandler)
+	http.HandleFunc("/get-word-meta", getWordMetaHandler)
 	http.HandleFunc("/verify-word", verifyWordHandler)
 	http.HandleFunc("/verify-word-with-uyirmei", verifyWordWithUyirMeiHandler)
 
@@ -746,6 +1158,12 @@ func main() {
 	http.Handle("/ui1/", http.StripPrefix("/ui1/", ui1))
 	http.Handle("/ui2/", http.StripPrefix("/ui2/", ui2))
 	http.Handle("/ui3/", http.StripPrefix("/ui3/", ui3))
+
+	http.Handle("/admin/create-user", jwtMiddleware(http.HandlerFunc(createUserHandler)))
+	http.Handle("/admin/generate-auth-token", jwtMiddleware(http.HandlerFunc(generateAuthTokenHandler)))
+	http.Handle("/admin/mark-user-active", jwtMiddleware(http.HandlerFunc(markUserActiveHandler)))
+	http.Handle("/user/download-private-key", jwtMiddleware(http.HandlerFunc(keyGenHandler)))
+	http.Handle("/user/add-word", jwtMiddleware(http.HandlerFunc(addWordHandler)))
 
 	http.HandleFunc("/", homeHandler)
 
