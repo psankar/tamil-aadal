@@ -12,5 +12,7 @@ COPY --from=build /tamil-aadal /tamil-aadal
 ADD ui1 /ui1
 ADD ui2 /ui2
 ADD ui3 /ui3
+COPY auth /auth
 USER nonroot:nonroot
+ENV GOOGLE_APPLICATION_CREDENTIALS /auth/vetchi-dev-firebase-adminsdk-cjf4f-80eddf2908.json
 ENTRYPOINT ["/tamil-aadal"]
