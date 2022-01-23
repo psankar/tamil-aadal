@@ -44,6 +44,20 @@
     <div id="result"></div>
   </body>
   <script>
+    window.onload = onLoad;
+    function onLoad() {
+      document.getElementById('user').focus();
+      // Get user and private key from local storage
+      var user = localStorage.getItem('userId');
+      if (user) {
+        document.getElementById('user').value = user;
+      }
+      var privateKey = localStorage.getItem('privateKey');
+      if (privateKey) {
+        document.getElementById('privateKey').value = privateKey;
+      }
+    }
+
     function generateKeyPair() {
       var token = document.getElementById('token').value;
       var userId = document.getElementById('user').value;
@@ -59,6 +73,10 @@
             '<b>Private key</b><br />' +
             privateKey +
             '<br /><br />Copy this and keep this secret';
+
+          // Store the private key in the browser's local storage
+          localStorage.setItem('privateKey', privateKey);
+          localStorage.setItem('userId', userId);
         } else {
           document.getElementById('keyPair').innerHTML =
             'Error in fetching key pair. Try again or reach out to admin';
