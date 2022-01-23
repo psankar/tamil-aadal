@@ -14,15 +14,10 @@ import (
 	"os"
 	"strings"
 	"time"
-	"unicode"
 
 	jwt "github.com/golang-jwt/jwt/v4"
 	"tamilaadal.com/backend/dao"
 )
-
-func getWordForToday() string {
-	return "காற்றுவெளியிடை"
-}
 
 const (
 	LetterMatched   = "LETTER_MATCHED"
@@ -31,10 +26,6 @@ const (
 	UyirMatched     = "UYIR_MATCHED"
 	MeiMatched      = "MEI_MATCHED"
 )
-
-var todayLetters []string
-var todayLettersMap map[string]struct{}
-var isDiacritic map[rune]struct{}
 
 var uyirMap, meiMap map[string]string
 
@@ -50,35 +41,6 @@ var verifyKey *rsa.PublicKey
 var signKey *rsa.PrivateKey
 
 func init() {
-	var empty struct{}
-	isDiacritic = make(map[rune]struct{})
-	isDiacritic['\u0B82'] = empty
-	isDiacritic['\u0BBE'] = empty
-	isDiacritic['\u0BBF'] = empty
-	isDiacritic['\u0BC0'] = empty
-	isDiacritic['\u0BC1'] = empty
-	isDiacritic['\u0BC2'] = empty
-	isDiacritic['\u0BC6'] = empty
-	isDiacritic['\u0BC7'] = empty
-	isDiacritic['\u0BC8'] = empty
-	isDiacritic['\u0BCA'] = empty
-	isDiacritic['\u0BCB'] = empty
-	isDiacritic['\u0BCC'] = empty
-	isDiacritic['\u0BCD'] = empty
-	isDiacritic['\u0BD7'] = empty
-
-	var err error
-	todayLetters, err = splitWordGetLetters(getWordForToday())
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	todayLettersMap = make(map[string]struct{})
-	for _, letter := range todayLetters {
-		todayLettersMap[letter] = empty
-	}
-
 	uyirMap = map[string]string{
 		"க": "அ",
 		"ங": "அ",
@@ -600,28 +562,9 @@ func init() {
 	}
 }
 
-type CurrentWordLenResponse struct {
-	Length int
-}
-
 type WordMetaResponse struct {
 	Length int
 	User   dao.User
-}
-
-func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w, r)
-	if r.Method == http.MethodOptions {
-		return
-	}
-
-	err := json.NewEncoder(w).Encode(CurrentWordLenResponse{len(todayLetters)})
-	if err != nil {
-		log.Printf("failed to encode response: %s", err)
-		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
-			http.StatusInternalServerError)
-		return
-	}
 }
 
 func getWordMetaHandler(w http.ResponseWriter, r *http.Request) {
@@ -636,23 +579,17 @@ func getWordMetaHandler(w http.ResponseWriter, r *http.Request) {
 		date = time.Now().Format("2006-01-02")
 	}
 
-	word, err := dao.GetWordForTheDay(date)
-	if err != nil || word.Id == "" {
+	wordWrapper, err := dao.GetWordForTheDay(date)
+	if err != nil || wordWrapper.Word.Id == "" {
 		log.Printf("failed to get word for the day: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 			http.StatusInternalServerError)
 		return
 	}
 
-	wantLetters, err := splitWordGetLetters(word.Word)
-	if err != nil {
-		log.Printf("failed to split word: %s", err)
-		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
-			http.StatusInternalServerError)
-		return
-	}
+	wantLetters := wordWrapper.Letters
 
-	err = json.NewEncoder(w).Encode(WordMetaResponse{len(wantLetters), word.User})
+	err = json.NewEncoder(w).Encode(WordMetaResponse{len(wantLetters), wordWrapper.Word.User})
 	if err != nil {
 		log.Printf("failed to encode response: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
@@ -681,26 +618,16 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 		date = time.Now().Format("2006-01-02")
 	}
 
-	word, err := dao.GetWordForTheDay(date)
-	if err != nil || word.Id == "" {
+	wordWrapper, err := dao.GetWordForTheDay(date)
+	if err != nil || wordWrapper.Word.Id == "" {
 		log.Printf("failed to get word for the day: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 			http.StatusInternalServerError)
 		return
 	}
 
-	wantLetters, err := splitWordGetLetters(word.Word)
-	if err != nil {
-		log.Printf("failed to split word: %s", err)
-		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
-			http.StatusInternalServerError)
-		return
-	}
-	var empty struct{}
-	wantLettersMap := make(map[string]struct{})
-	for _, letter := range wantLetters {
-		wantLettersMap[letter] = empty
-	}
+	wantLetters := wordWrapper.Letters
+	wantLettersMap := wordWrapper.LettersMap
 
 	if len(letters) != len(wantLetters) {
 		http.Error(w, "Invalid word length; சரியான நீளத்தில் அனுப்பவும்",
@@ -761,21 +688,16 @@ func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
 		date = time.Now().Format("2006-01-02")
 	}
 
-	word, err := dao.GetWordForTheDay(date)
-	if err != nil || word.Id == "" {
+	wordWrapper, err := dao.GetWordForTheDay(date)
+	if err != nil || wordWrapper.Word.Id == "" {
 		log.Printf("failed to get word for the day: %s", err)
 		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
 			http.StatusInternalServerError)
 		return
 	}
 
-	wantLetters, err := splitWordGetLetters(word.Word)
-	if err != nil {
-		log.Printf("failed to split word: %s", err)
-		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
-			http.StatusInternalServerError)
-		return
-	}
+	wantLetters := wordWrapper.Letters
+	wantLettersMap := wordWrapper.LettersMap
 
 	if len(letters) != len(wantLetters) {
 		http.Error(w, "Invalid word length; சரியான நீளத்தில் அனுப்பவும்",
@@ -783,7 +705,7 @@ func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, allMatched := verifyWordWithUyirMei(letters, wantLetters)
+	response, allMatched := verifyWordWithUyirMei(letters, wantLetters, wantLettersMap)
 
 	w.Header().Set("Content-Type", "application/json")
 	if allMatched {
@@ -802,14 +724,7 @@ func verifyWordWithUyirMeiHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func verifyWordWithUyirMei(gotLetters []string,
-	wantLetters []string) ([][]string, bool) {
-
-	var empty struct{}
-	wantLettersMap := make(map[string]struct{})
-	for _, letter := range wantLetters {
-		wantLettersMap[letter] = empty
-	}
-
+	wantLetters []string, wantLettersMap map[string]struct{}) ([][]string, bool) {
 	allMatched := true
 
 	var response [][]string
@@ -843,27 +758,6 @@ func verifyWordWithUyirMei(gotLetters []string,
 	}
 
 	return response, allMatched
-}
-
-func splitWordGetLetters(word string) ([]string, error) {
-	var letters []string
-
-	for _, r := range word {
-		if !unicode.Is(unicode.Tamil, r) {
-			return nil, fmt.Errorf("Non-Tamil word")
-		}
-
-		if _, yes := isDiacritic[r]; yes {
-			if len(letters) == 0 {
-				return nil, fmt.Errorf("invalid diacritic position")
-			}
-			letters[len(letters)-1] += string(r)
-		} else {
-			letters = append(letters, string(r))
-		}
-	}
-
-	return letters, nil
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -1139,7 +1033,6 @@ func jwtAdminAuthMiddleware(next http.Handler) http.Handler {
 
 func jwtUserAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("jwtMiddleware")
 		enableCORS(w, r)
 		if r.Method == http.MethodOptions {
 			return
@@ -1210,7 +1103,6 @@ func enableCORS(w http.ResponseWriter, req *http.Request) {
 func main() {
 	log.Print("starting server...")
 
-	http.HandleFunc("/get-current-word-len", getCurrentWordLenHandler)
 	http.HandleFunc("/get-word-meta", getWordMetaHandler)
 	http.HandleFunc("/verify-word", verifyWordHandler)
 	http.HandleFunc("/verify-word-with-uyirmei", verifyWordWithUyirMeiHandler)

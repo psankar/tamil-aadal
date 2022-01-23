@@ -33,18 +33,18 @@ func main() {
 	}
 	log.Printf("Updated public key")*/
 
-	word, err := dao.GetWordForTheDay("2022-01-23")
+	wordWrapper, err := dao.GetWordForTheDay("2022-01-23")
 	if err != nil {
 		log.Fatalf("Failed to get word for the day: %v", err)
 	}
-	log.Printf("Word for the day: %v %v", word.Word, word.User.Name)
+	log.Printf("Word for the day: %v %v", wordWrapper.Word.Word, wordWrapper.Word.User.Name)
 
 	// should read from cache
-	word, err = dao.GetWordForTheDay("2022-01-23")
+	wordWrapper, err = dao.GetWordForTheDay("2022-01-23")
 	if err != nil {
 		log.Fatalf("Failed to get word for the day: %v", err)
 	}
-	log.Printf("Word for the day: %v %v", word.Word, word.User.Name)
+	log.Printf("Word for the day: %v", wordWrapper.Letters)
 
 	/*id, err := dao.AddWord(dao.Word{
 		Word:   "தமிழ்",

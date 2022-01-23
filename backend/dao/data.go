@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"unicode"
 
 	firestore "cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go/v4"
@@ -26,11 +27,63 @@ type Word struct {
 	User User
 }
 
+type WordWrapper struct {
+	Word       Word
+	Letters    []string
+	LettersMap map[string]struct{}
+}
+
 const usersCollectionName = "users"
 const wordsCollectionName = "words"
 
-var wordMap = map[string]Word{}
+var wordMap = map[string]WordWrapper{}
 var userMap = map[string]User{}
+
+var empty struct{}
+var isDiacritic = map[rune]struct{}{'\u0B82': empty,
+	'\u0BBE': empty,
+	'\u0BBF': empty,
+	'\u0BC0': empty,
+	'\u0BC1': empty,
+	'\u0BC2': empty,
+	'\u0BC6': empty,
+	'\u0BC7': empty,
+	'\u0BC8': empty,
+	'\u0BCA': empty,
+	'\u0BCB': empty,
+	'\u0BCC': empty,
+	'\u0BCD': empty,
+	'\u0BD7': empty,
+}
+
+func splitWordGetLetters(word string) ([]string, error) {
+	var letters []string
+
+	for _, r := range word {
+		if !unicode.Is(unicode.Tamil, r) {
+			return nil, fmt.Errorf("Non-Tamil word")
+		}
+
+		if _, yes := isDiacritic[r]; yes {
+			if len(letters) == 0 {
+				return nil, fmt.Errorf("invalid diacritic position")
+			}
+			letters[len(letters)-1] += string(r)
+		} else {
+			letters = append(letters, string(r))
+		}
+	}
+
+	return letters, nil
+}
+
+func getWordLettersMap(wantLetters []string) map[string]struct{} {
+	wantLettersMap := make(map[string]struct{})
+	for _, letter := range wantLetters {
+		wantLettersMap[letter] = empty
+	}
+	return wantLettersMap
+}
 
 func openClient() (context.Context, *firestore.Client, error) {
 	ctx := context.Background()
@@ -187,13 +240,19 @@ func AddWord(word Word) (string, error) {
 	}
 	defer client.Close()
 
+	// Check if its a splittable word
+	letters, err := splitWordGetLetters(word.Word)
+	if err != nil {
+		return "", err
+	}
+
 	// Check if word already exists for the day
 	w, err := GetWordForTheDay(word.Date)
 	if err != nil {
 		err = fmt.Errorf("failed to check if word exists for the day: %v", err)
 		return "", err
 	}
-	if w.Id != "" {
+	if w.Word.Id != "" {
 		err = fmt.Errorf("word already exists for the day")
 		return "", err
 	}
@@ -214,18 +273,24 @@ func AddWord(word Word) (string, error) {
 		err = fmt.Errorf("failed to add word: %v", err)
 		return "", err
 	}
-	wordMap[word.Date] = word
+
+	var wordWrapper WordWrapper = WordWrapper{
+		Word:       word,
+		Letters:    letters,
+		LettersMap: getWordLettersMap(letters),
+	}
+	wordMap[word.Date] = wordWrapper
 	return ref.ID, err
 }
 
-func GetWordForTheDay(date string) (Word, error) {
-	if word, ok := wordMap[date]; ok {
+func GetWordForTheDay(date string) (WordWrapper, error) {
+	if wordWrapper, ok := wordMap[date]; ok {
 		log.Println("Found word in cache")
-		return word, nil
+		return wordWrapper, nil
 	}
 	ctx, client, err := openClient()
 	if err != nil {
-		return Word{}, err
+		return WordWrapper{}, err
 	}
 	defer client.Close()
 
@@ -236,15 +301,24 @@ func GetWordForTheDay(date string) (Word, error) {
 			break
 		}
 		if err != nil {
-			return Word{}, fmt.Errorf("failed to iterate: %v", err)
+			return WordWrapper{}, fmt.Errorf("failed to iterate: %v", err)
 		}
 		var word Word
 		doc.DataTo(&word)
 		word.Id = doc.Ref.ID
 		if word.Word != "" {
-			wordMap[word.Date] = word
-			return word, nil
+			letters, err := splitWordGetLetters(word.Word)
+			if err != nil {
+				return WordWrapper{}, err
+			}
+			var wordWrapper WordWrapper = WordWrapper{
+				Word:       word,
+				Letters:    letters,
+				LettersMap: getWordLettersMap(letters),
+			}
+			wordMap[word.Date] = wordWrapper
+			return wordWrapper, nil
 		}
 	}
-	return Word{}, nil
+	return WordWrapper{}, nil
 }
