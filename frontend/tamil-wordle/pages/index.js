@@ -17,7 +17,10 @@ import { Alert } from "../components/alert";
 import { useState, useRef, useEffect } from "react";
 import { States } from "../game";
 
-import {getLetterPos} from "../tamil-letters";
+import { getLetterPos } from "../tamil-letters";
+
+import { zonedTimeToUtc } from "date-fns-tz";
+import { isAfter, sub, differenceInDays, differenceInMinutes } from "date-fns";
 
 function Questionmark() {
     return (
@@ -27,19 +30,78 @@ function Questionmark() {
         </div>
     );
 }
+let initialGameState = {
+    updated: new Date(),
+    showHelp: true,
+    over: false,
+    words: [], // [{word, status}]
+    triedWords: {}, // map of tried Words for checking duplicates
+    letterHint: {}, // {leter: [CORRECT, WRONG_PLACE, NOT THERE] for the given pos
+    posHint: [], // [ [row, col] ] - for each pos, holds the row/col match in the 19x13 tamil letter matrix
+};
+
+function useGameState(word_length, end_point) {
+    let [gameState, bUpdateGameState] = useState({ ...initialGameState, word_length });
+    let [loaded, updateLoaded] = useState(false);
+
+    function updateGameState(state) {
+        bUpdateGameState(state);
+        if (window && window.localStorage) {
+            window.localStorage.setItem(end_point, JSON.stringify({ ...state, updated: new Date() }));
+        }
+    }
+
+    function toReset(state, end_point) {
+        let startTime = {hours: 3, minutes: 30 };
+        let reset = false;
+        let today = new Date();
+        today = sub(today, startTime);
+        // reset the state everyday at 9:00 IST
+        let start = new Date();
+        start.setUTCHours(startTime.hours);
+        start.setUTCMinutes(startTime.minutes);
+        start = sub(start, startTime);
+
+        if(differenceInMinutes(today, start) < 0) {
+            start = sub(start, {hours: 24});
+        }
+
+        if (state && state.updated) {
+            let lastUpdated = new Date(state.updated);
+            lastUpdated = sub(lastUpdated, startTime);
+            if (!isAfter(lastUpdated, start)) {
+                reset = true;
+            }
+        }
+        return reset;
+    }
+
+    useEffect(() => {
+        console.log("loading gamestate...", new Date(gameState?.updated).toUTCString(), loaded);
+        // reset the state everyday at 9:00 IST
+        let reset = toReset(gameState, end_point);
+        if (!loaded || reset) {
+            let state = window.localStorage.getItem(end_point);
+            let gs = JSON.parse(state) || {...initialGameState, word_length };
+            if(toReset(gs, end_point)) {
+                reset = true;
+                console.log("resetting");
+                gs = {...initialGameState, word_length };
+            }
+            bUpdateGameState({ ...gs });
+            updateLoaded(true);
+        }
+    }, [loaded]);
+
+    return [gameState, updateGameState];
+}
+
 export default function Home({ word_length, server, end_point, error }) {
     let [showHelp, updateShowHelp] = useState(true);
-    let [gameState, updateGameState] = useState({
-        over: false,
-        word_length,
-        words: [], // [{word, status}]
-        triedWords: {}, // map of tried Words for checking duplicates
-        letterHint: {}, // {leter: [CORRECT, WRONG_PLACE, NOT THERE] for the given pos
-        posHint: [], // [ [row, col] ] - for each pos, holds the row/col match in the 19x13 tamil letter matrix
-    }); // {word, result}
+    let [gameState, updateGameState] = useGameState(word_length, end_point);
     let [showModal, updateShowModal] = useState(false);
-    let [alert, updateAlert] = useState({msg: "", show: false, status: "error"});
-    let showAlert = (status, msg) => updateAlert({...alert, msg: msg +"", status, show: true});
+    let [alert, updateAlert] = useState({ msg: "", show: false, status: "error" });
+    let showAlert = (status, msg) => updateAlert({ ...alert, msg: msg + "", status, show: true });
 
     function checkDuplicate(word) {
         return gameState.triedWords[word] !== undefined;
@@ -51,7 +113,7 @@ export default function Home({ word_length, server, end_point, error }) {
 
     async function onNewGuess(guess) {
         gameState.triedWords[guess] = true;
-        updateGameState({...gameState});
+        updateGameState({ ...gameState });
         let word = [];
         guess.forUnicodeEach((x) => word.push(x));
         try {
@@ -66,32 +128,28 @@ export default function Home({ word_length, server, end_point, error }) {
                 let data = await res.json();
                 gameState.words.push({ word: guess, result: data });
                 let pos = 0;
-                guess.forUnicodeEach(ch => {
-                    if(!gameState.letterHint[ch])
-                        gameState.letterHint[ch] = [];
+                guess.forUnicodeEach((ch) => {
+                    if (!gameState.letterHint[ch]) gameState.letterHint[ch] = [];
 
                     // update the hint
                     let hint = gameState.letterHint[ch];
                     if (hint.length < word_length) {
-                        for(let i=hint.length; i<word_length; i++)
-                            hint.push(States.LETTER_UNKNOWN);
+                        for (let i = hint.length; i < word_length; i++) hint.push(States.LETTER_UNKNOWN);
                     }
-                    if(hint[pos] === States.LETTER_UNKNOWN) 
-                        hint[pos] = data[pos][0];
-                    if(data[pos] === States.LETTER_NOT_FOUND) {
+                    if (hint[pos] === States.LETTER_UNKNOWN) hint[pos] = data[pos][0];
+                    if (data[pos] === States.LETTER_NOT_FOUND) {
                         hint.fill(States.LETTER_NOT_FOUND);
                     }
 
                     // update pos hints
-                    if(gameState.posHint.length <= i+1) {
-                        gameState.posHint.push([-1,-1]);
-                        gameState.posHint.push([-1,-1]);
+                    if (gameState.posHint.length <= i + 1) {
+                        gameState.posHint.push([-1, -1]);
+                        gameState.posHint.push([-1, -1]);
                     }
-                    if(data[pos].length > 1) {
+                    if (data[pos].length > 1) {
                         let posHint = gameState.posHint[pos];
-                        if(data[pos][1] === States.MEI_MATCHED)
-                            posHint[1] = getLetterPos(ch)[1];
-                        else if(data[pos][1] === States.UYIR_MATCHED) {
+                        if (data[pos][1] === States.MEI_MATCHED) posHint[1] = getLetterPos(ch)[1];
+                        else if (data[pos][1] === States.UYIR_MATCHED) {
                             posHint[0] = getLetterPos(ch)[0];
                         }
                     }
@@ -105,7 +163,7 @@ export default function Home({ word_length, server, end_point, error }) {
                 guess.forUnicodeEach((x) => {
                     data.push([States.LETTER_MATCHED]);
                     gameState.posHint[i] = getLetterPos[x];
-                    i+=1;
+                    i += 1;
                 });
                 if (!gameState.over) {
                     gameState.words.push({ word: guess, result: data });
@@ -116,7 +174,7 @@ export default function Home({ word_length, server, end_point, error }) {
             }
         } catch (error) {
             gameState.triedWords[guess] = undefined;
-            updateGameState({...gameState});
+            updateGameState({ ...gameState });
             showAlert("error", error);
             console.error(error);
         }
@@ -144,9 +202,14 @@ export default function Home({ word_length, server, end_point, error }) {
                                 </a>
                             </div>
                         </div>
-                        <Alert show={true} ><div className="bg-pink-100 p-2 underline text-blue-300"><a href="https://tamil-wordle-git-feature-uyirmei-tsureshkumar.vercel.app/">{IntlMsg.try_uyirmei}</a></div></Alert>
-                        <Alert status={alert.status} show={alert.show} onHide={() => updateAlert({...alert, show: false})}>{alert.msg}</Alert>
-                        
+                        <Alert
+                            status={alert.status}
+                            show={alert.show}
+                            onHide={() => updateAlert({ ...alert, show: false })}
+                        >
+                            {alert.msg}
+                        </Alert>
+
                         {error ? (
                             <div className="rounded bg-pink-300 bold">{error}</div>
                         ) : (
@@ -178,7 +241,7 @@ export default function Home({ word_length, server, end_point, error }) {
                         <Modal show={showModal} onClose={() => updateShowModal(false)}>
                             <Success word_length={gameState.word_length} words={gameState.words} />
                         </Modal>
-                        <Help show={showHelp} onClose={() => updateShowHelp(false)} word_length={word_length}/>
+                        <Help show={showHelp} onClose={() => updateShowHelp(false)} word_length={word_length} />
                     </div>
                 </main>
 
