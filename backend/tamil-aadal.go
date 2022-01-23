@@ -928,11 +928,6 @@ func addWordHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Word added successfully with id: " + id))
 }
 
-func notHandledHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Not yet implemented"))
-}
-
 func createUserHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user from request body
 	var u dao.User
