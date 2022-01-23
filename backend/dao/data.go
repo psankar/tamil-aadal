@@ -3,7 +3,6 @@ package dao
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	firestore "cloud.google.com/go/firestore"
@@ -165,10 +164,10 @@ func UpdatePublicKey(id string, publicKey string) error {
 }
 
 func GetUser(id string) (User, error) {
-	if user, ok := userMap[id]; ok {
+	/*if user, ok := userMap[id]; ok {
 		log.Println("Found user in cache")
 		return user, nil
-	}
+	}*/
 	ctx, client, err := openClient()
 	if err != nil {
 		return User{}, err
@@ -231,10 +230,10 @@ func AddWord(word Word) (string, error) {
 }
 
 func GetWordForTheDay(date string) (WordWrapper, error) {
-	if wordWrapper, ok := wordMap[date]; ok {
+	/*if wordWrapper, ok := wordMap[date]; ok {
 		log.Println("Found word in cache")
 		return wordWrapper, nil
-	}
+	}*/
 	ctx, client, err := openClient()
 	if err != nil {
 		return WordWrapper{}, err
