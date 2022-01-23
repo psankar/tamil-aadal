@@ -2,9 +2,7 @@ FROM golang:1.16-buster AS build
 
 WORKDIR /app
 
-COPY go.mod ./
-
-COPY *.go ./
+ADD * ./
 
 RUN go build -o /tamil-wordle
 

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	dao "example.com/tamil-wordle/dao"
+	dao "./dao"
 	jwt "github.com/golang-jwt/jwt/v4"
 )
 

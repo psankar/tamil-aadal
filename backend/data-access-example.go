@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	dao "example.com/tamil-wordle/dao"
+	dao "./dao"
 )
 
 func main() {

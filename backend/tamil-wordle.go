@@ -16,8 +16,8 @@ import (
 	"time"
 	"unicode"
 
-	dao "example.com/tamil-wordle/dao"
 	jwt "github.com/golang-jwt/jwt/v4"
+	"tamilaadal.com/backend/dao"
 )
 
 func getWordForToday() string {
