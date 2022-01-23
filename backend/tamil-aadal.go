@@ -871,11 +871,6 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func generateAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w, r)
-	if r.Method == http.MethodOptions {
-		return
-	}
-
 	var userID string
 	err := json.NewDecoder(r.Body).Decode(&userID)
 	if err != nil {
@@ -1084,6 +1079,10 @@ func ParseRSAPublicKeyFromPEM(key []byte) (*rsa.PublicKey, error) {
 
 func jwtMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		enableCORS(w, r)
+		if r.Method == http.MethodOptions {
+			return
+		}
 		// Get user from header
 		userId := r.Header.Get("x-user-id")
 		key := verifyKey
@@ -1114,7 +1113,7 @@ func jwtMiddleware(next http.Handler) http.Handler {
 
 		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
 		if len(authHeader) != 2 {
-			fmt.Println("Malformed token")
+			log.Println("Malformed token")
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Malformed Token"))
 		} else {
@@ -1129,7 +1128,7 @@ func jwtMiddleware(next http.Handler) http.Handler {
 				// props, _ := r.Context().Value("props").(jwt.MapClaims)
 				next.ServeHTTP(w, r.WithContext(ctx))
 			} else {
-				fmt.Println(err)
+				log.Println(err)
 				w.WriteHeader(http.StatusUnauthorized)
 				w.Write([]byte("Unauthorized"))
 			}
