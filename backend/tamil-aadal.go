@@ -1079,6 +1079,7 @@ func ParseRSAPublicKeyFromPEM(key []byte) (*rsa.PublicKey, error) {
 
 func jwtMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("jwtMiddleware")
 		enableCORS(w, r)
 		if r.Method == http.MethodOptions {
 			return

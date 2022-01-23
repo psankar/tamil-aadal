@@ -65,6 +65,7 @@
         }
       };
       xhr.send('"' + userId + '"');
+      document.getElementById('keyPair').innerHTML = 'Generating key pair...';
     }
 
     function addWord() {
@@ -110,6 +111,7 @@
           date: date,
         })
       );
+      document.getElementById('result').innerHTML = 'Adding word...';
     }
   </script>
   <script
