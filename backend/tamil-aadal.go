@@ -1,13 +1,13 @@
 package main
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -907,23 +907,33 @@ func generateAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func keyGenHandler(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w, r)
-	if r.Method == http.MethodOptions {
-		return
-	}
-
-	// valid sub claim from JWT with the request body
-	props, _ := r.Context().Value("props").(jwt.MapClaims)
-	userId := props["sub"].(string)
-
-	// Get user from request body
-	var u string
-	err := json.NewDecoder(r.Body).Decode(&u)
-	if err != nil {
-		http.Error(w, "Invalid body; தப்புதப்பா அனுப்ப வேண்டாம்",
+	// extract token from request params
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		http.Error(w, "Invalid token; தப்புதப்பா அனுப்ப வேண்டாம்",
 			http.StatusBadRequest)
 		return
 	}
+
+	// parse token
+	t, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		// since we only use the one private key to sign the tokens,
+		// we also only use its public counter part to verify
+		return verifyKey, nil
+	})
+	var claims jwt.MapClaims
+	var ok bool
+	if claims, ok = t.Claims.(jwt.MapClaims); !ok || !t.Valid {
+		log.Println(err)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Unauthorized"))
+		return
+	}
+	// valid sub claim from JWT with the request body
+	userId := claims["sub"].(string)
+
+	// Get user from request params
+	u := r.URL.Query().Get("user")
 	if userId != u {
 		http.Error(w, "Unauthorized; உங்கள் புகுபதிகை தவறானது",
 			http.StatusUnauthorized)
@@ -959,15 +969,41 @@ func keyGenHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Return private key
 	w.WriteHeader(http.StatusOK)
-	w.Write(keyPEM)
+
+	// Return a HTML page with the private key
+	// read HTML template
+	tpl, err := template.ParseFiles("ui1/magic.html")
+	if err != nil {
+		log.Printf("failed to parse template: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+	// execute template
+	user, err := dao.GetUser(userId)
+	if err != nil {
+		log.Printf("failed to get user: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
+	var values = map[string]string{
+		"PrivateKey":    string(keyPEM),
+		"UserId":        userId,
+		"UserName":      user.Name,
+		"TwitterHandle": user.TwitterHandle,
+	}
+
+	err = tpl.Execute(w, values)
+	if err != nil {
+		log.Printf("failed to execute template: %s", err)
+		http.Error(w, "Internal error; தடங்கலுக்கு வருந்துகிறோம்",
+			http.StatusInternalServerError)
+		return
+	}
 }
 
 func addWordHandler(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w, r)
-	if r.Method == http.MethodOptions {
-		return
-	}
-
 	// Get user from request body
 	var u map[string]string
 	err := json.NewDecoder(r.Body).Decode(&u)
@@ -998,11 +1034,6 @@ func notHandledHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func createUserHandler(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w, r)
-	if r.Method == http.MethodOptions {
-		return
-	}
-
 	// Get user from request body
 	var u dao.User
 	err := json.NewDecoder(r.Body).Decode(&u)
@@ -1026,11 +1057,6 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func markUserActiveHandler(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w, r)
-	if r.Method == http.MethodOptions {
-		return
-	}
-
 	// Get user from request body
 	var userId string
 	err := json.NewDecoder(r.Body).Decode(&userId)
@@ -1077,7 +1103,35 @@ func ParseRSAPublicKeyFromPEM(key []byte) (*rsa.PublicKey, error) {
 	return parsedKey.(*rsa.PublicKey), nil
 }
 
-func jwtMiddleware(next http.Handler) http.Handler {
+func jwtAdminAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		enableCORS(w, r)
+		if r.Method == http.MethodOptions {
+			return
+		}
+		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
+		if len(authHeader) != 2 {
+			log.Println("Malformed token")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("Malformed Token"))
+		} else {
+			jwtToken := authHeader[1]
+			token, err := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
+				return verifyKey, nil
+			})
+
+			if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+				next.ServeHTTP(w, r)
+			} else {
+				log.Println(err)
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte("Unauthorized"))
+			}
+		}
+	})
+}
+
+func jwtUserAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("jwtMiddleware")
 		enableCORS(w, r)
@@ -1086,9 +1140,10 @@ func jwtMiddleware(next http.Handler) http.Handler {
 		}
 		// Get user from header
 		userId := r.Header.Get("x-user-id")
-		key := verifyKey
 
-		// Use user key for validation if userid is present; else use the admin public key
+		var key *rsa.PublicKey
+
+		// Use user key for validation
 		if userId != "" {
 			user, err := dao.GetUser(userId)
 			if err != nil {
@@ -1097,8 +1152,8 @@ func jwtMiddleware(next http.Handler) http.Handler {
 					http.StatusInternalServerError)
 				return
 			}
-			if user.Active == false {
-				log.Println("User is not active")
+			if !user.Active {
+				log.Println("User is not active but is trying to set the word")
 				http.Error(w, "User is not active", http.StatusUnauthorized)
 				return
 			}
@@ -1110,6 +1165,11 @@ func jwtMiddleware(next http.Handler) http.Handler {
 					http.StatusInternalServerError)
 				return
 			}
+		} else {
+			// user id is not present. unauthorized
+			log.Println("User id not present in header")
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
 		}
 
 		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
@@ -1123,11 +1183,8 @@ func jwtMiddleware(next http.Handler) http.Handler {
 				return key, nil
 			})
 
-			if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-				ctx := context.WithValue(r.Context(), "props", claims)
-				// Access context values in handlers like this
-				// props, _ := r.Context().Value("props").(jwt.MapClaims)
-				next.ServeHTTP(w, r.WithContext(ctx))
+			if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+				next.ServeHTTP(w, r)
 			} else {
 				log.Println(err)
 				w.WriteHeader(http.StatusUnauthorized)
@@ -1159,11 +1216,11 @@ func main() {
 	http.Handle("/ui2/", http.StripPrefix("/ui2/", ui2))
 	http.Handle("/ui3/", http.StripPrefix("/ui3/", ui3))
 
-	http.Handle("/admin/create-user", jwtMiddleware(http.HandlerFunc(createUserHandler)))
-	http.Handle("/admin/generate-auth-token", jwtMiddleware(http.HandlerFunc(generateAuthTokenHandler)))
-	http.Handle("/admin/mark-user-active", jwtMiddleware(http.HandlerFunc(markUserActiveHandler)))
-	http.Handle("/user/download-private-key", jwtMiddleware(http.HandlerFunc(keyGenHandler)))
-	http.Handle("/user/add-word", jwtMiddleware(http.HandlerFunc(addWordHandler)))
+	http.Handle("/admin/create-user", jwtAdminAuthMiddleware(http.HandlerFunc(createUserHandler)))
+	http.Handle("/admin/generate-auth-token", jwtAdminAuthMiddleware(http.HandlerFunc(generateAuthTokenHandler)))
+	http.Handle("/admin/mark-user-active", jwtAdminAuthMiddleware(http.HandlerFunc(markUserActiveHandler)))
+	http.Handle("/user/add-word", jwtUserAuthMiddleware(http.HandlerFunc(addWordHandler)))
+	http.HandleFunc("/user/magic", keyGenHandler)
 
 	http.HandleFunc("/", homeHandler)
 

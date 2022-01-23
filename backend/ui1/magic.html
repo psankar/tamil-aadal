@@ -1,0 +1,23 @@
+<html>
+  <meta charset="UTF-8" />
+
+  <head>
+    <title>தமிழாடல் - Tamilaadal</title>
+  </head>
+  <body></body>
+  <script>
+    window.onload = onLoad;
+    function onLoad() {
+      // Store the private key in the browser's local storage
+      localStorage.setItem('privateKey', {{.PrivateKey}});
+      localStorage.setItem('userId', {{.UserId}});
+      localStorage.setItem('userName', {{.UserName}});
+      localStorage.setItem('twitterHandle', {{.TwitterHandle}});
+
+      document.body.innerHTML = "Successfully validated";
+
+      // redirect to add words page
+      window.location.href = "/ui1/user.html";
+    }
+  </script>
+</html>

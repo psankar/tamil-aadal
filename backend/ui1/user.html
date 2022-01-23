@@ -10,28 +10,9 @@
     </style>
   </head>
   <body>
-    User
-    <input type="text" id="user" placeholder="Your user id" />
-    <hr />
-    <b>Generate the key pair</b><br />
-    <textarea
-      id="token"
-      rows="10"
-      cols="80"
-      placeholder="Paste the token received from admin"
-    ></textarea
-    ><br />
-    <button onclick="generateKeyPair()">Generate</button>
-    <div id="keyPair"></div>
+    Welcome, <span id="user"></span>!
     <hr />
     <b>Add word</b><br />
-    <textarea
-      id="privateKey"
-      rows="10"
-      cols="80"
-      placeholder="Paste your private key"
-    ></textarea
-    ><br /><br />
     <label>Word</label
     ><input type="text" id="word" placeholder="Enter the word" /><br />
     <label>Date </label
@@ -46,49 +27,19 @@
   <script>
     window.onload = onLoad;
     function onLoad() {
-      document.getElementById('user').focus();
       // Get user and private key from local storage
-      var user = localStorage.getItem('userId');
+      var user = localStorage.getItem('userName');
       if (user) {
-        document.getElementById('user').value = user;
+        document.getElementById('user').innerHTML = user;
+      } else {
+        document.body.innerHTML =
+          'Error: You are not authorized to view this page.';
       }
-      var privateKey = localStorage.getItem('privateKey');
-      if (privateKey) {
-        document.getElementById('privateKey').value = privateKey;
-      }
-    }
-
-    function generateKeyPair() {
-      var token = document.getElementById('token').value;
-      var userId = document.getElementById('user').value;
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', '/user/download-private-key', true);
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-      xhr.onload = function () {
-        if (this.status == 200) {
-          var privateKey = this.responseText;
-          document.getElementById('privateKey').value = privateKey;
-          document.getElementById('keyPair').innerHTML =
-            '<b>Private key</b><br />' +
-            privateKey +
-            '<br /><br />Copy this and keep this secret';
-
-          // Store the private key in the browser's local storage
-          localStorage.setItem('privateKey', privateKey);
-          localStorage.setItem('userId', userId);
-        } else {
-          document.getElementById('keyPair').innerHTML =
-            'Error in fetching key pair. Try again or reach out to admin';
-        }
-      };
-      xhr.send('"' + userId + '"');
-      document.getElementById('keyPair').innerHTML = 'Generating key pair...';
     }
 
     function addWord() {
-      var privateKey = document.getElementById('privateKey').value;
-      var userId = document.getElementById('user').value;
+      var privateKey = localStorage.getItem('privateKey');
+      var userId = localStorage.getItem('userId');
       var word = document.getElementById('word').value;
       var date = document.getElementById('date').value;
       var xhr = new XMLHttpRequest();

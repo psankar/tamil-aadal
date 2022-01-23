@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	dao "./dao"
 	jwt "github.com/golang-jwt/jwt/v4"
+	dao "tamilaadal.com/backend/dao"
 )
 
 const privKeyPath = "auth/admin.rsa"
@@ -52,19 +52,16 @@ func createToken(key *rsa.PrivateKey) (string, error) {
 
 func main() {
 	// 1. Create an user
-	userId := createUser(dao.User{Name: "sankar1", TwitterHandle: "psankar"})
+	userId := createUser(dao.User{Name: "வருண்குமார் நாகராஜன்", TwitterHandle: "varunkumar"})
 	// 2. Mark the user active
 	markUserActive(userId)
-	// 3. Use admin to generate JWT token for the user
-	token := getAuthToken(userId)
-	// 4. Share the token and the user id with the user
-	// 5. User has to use the token to generate & download private key
-	privateKey := downloadPrivateKey(userId, token)
-	// 6. For adding words, use the generated private key
-	addWord("தமிழாடல்", "2022-01-19", userId, privateKey)
-	addWord("தமிழாடல்", "2022-01-21", userId, privateKey)
-	addWord("தமிழாடல்", "2022-01-22", userId, privateKey)
-	addWord("தமிழாடல்", "2022-01-23", userId, privateKey)
+	// 3. Admin to generate magic url
+	log.Println(getMagicUrl(userId))
+	// 4. Share the magic URL with the user
+	// 5. Magic url will use the token to generate & download private key to local storage
+	// 6. Magic url will take the user to the page for adding new words
+
+	// Note: Admin has to generae a new magic url
 }
 
 func createUser(user dao.User) string {
@@ -119,7 +116,7 @@ func markUserActive(userId string) {
 	log.Printf("Response: %s", body)
 }
 
-func getAuthToken(userId string) string {
+func getMagicUrl(userId string) string {
 	token, err := createToken(signKey)
 	if err != nil {
 		log.Fatalf("failed to create token: %s", err)
@@ -142,7 +139,9 @@ func getAuthToken(userId string) string {
 		log.Fatalf("failed to read response: %s", err)
 	}
 	log.Printf("Token: %s", body)
-	return string(body)
+
+	url := baseURL + "/user/magic?user=" + userId + "&token=" + string(body)
+	return url
 }
 
 func downloadPrivateKey(userId string, token string) string {
