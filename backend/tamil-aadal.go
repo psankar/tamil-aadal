@@ -728,7 +728,7 @@ func verifyWordHandler(w http.ResponseWriter, r *http.Request) {
 
 	if allMatched {
 		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte("OK"))
+		w.Write([]byte("ok"))
 		return
 	}
 
