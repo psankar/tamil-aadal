@@ -169,7 +169,18 @@
 
           var userLabel = document.getElementById('userLabel');
           if (jsonResponse.User) {
-            userLabel.innerText = 'Word set by ' + jsonResponse.User.Name;
+            var userStr = '';
+            if (jsonResponse.User.TwitterHandle) {
+              userStr +=
+                "<a href='https://twitter.com/" +
+                jsonResponse.User.Name +
+                "' target='_blank'>" +
+                jsonResponse.User.Name +
+                '</a>';
+            } else {
+              userStr += jsonResponse.User.Name;
+            }
+            userLabel.innerText = 'Word set by ' + userStr;
           } else {
             userLabel.innerText = 'Word set by Anonymous';
           }
