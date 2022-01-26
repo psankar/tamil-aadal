@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import React from "react";
 import ReactDOM from "react-dom";
 import { useState, useRef, useEffect } from "react";
@@ -150,6 +151,20 @@ export function GameProvider(props) {
         updateShowModal(true);
     }
 
+    // get status for each letter based on last attempt
+    function getLetterStatusForWord(word) {
+        let status = _.times(gameState.word_length, _.constant(States.LETTER_UNKNOWN));
+        let i = 0;
+        word.forUnicodeEach((c) => {
+            let hint = gameState.letterHint[c];
+            if (hint && hint.length > i) {
+                status[i] = hint[i];
+            }
+            i += 1;
+        });
+        return status;
+    }
+
     // update game word length for the day
     useEffect(async () => {
         console.log("loading gamestate...", new Date(gameState?.updated).toUTCString());
@@ -179,6 +194,7 @@ export function GameProvider(props) {
                 checkDuplicate,
                 showSuccess,
                 guessWord,
+                getLetterStatusForWord,
             }}
         >
             <Title />
