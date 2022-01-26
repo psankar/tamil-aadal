@@ -1,5 +1,5 @@
 export const IntlMsg = {
-    game_name: "தமிழ் சொல்விளையாட்டு",
+    game_name: "தமிழாடல்",
     btn_try: "சரி பார்க்க",
     btn_game_over: "கெலிச்சாச்சு! பகிரவும்!",
     btn_final_message: "சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள்!!! If you are interested, copy and paste the emoji table to social media!",
