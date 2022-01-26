@@ -7,31 +7,18 @@ import ReactDOM from "react-dom";
 import * as UC from "../unicode-utils";
 import { IntlMsg } from "../messages-ta";
 
-import { Modal } from "../components/modal";
-import { Success } from "../components/success-message";
 import { Help } from "../components/help-page";
 import { Input } from "../components/word-input";
 import { Tile, Tiles } from "../components/tiles";
-import { Alert } from "../components/alert";
 
 import { useState, useRef, useEffect, useContext } from "react";
-import { States } from "../game";
 
-import { getLetterPos } from "../tamil-letters";
 
 import { zonedTimeToUtc } from "date-fns-tz";
 import { isAfter, sub, differenceInDays, differenceInMinutes } from "date-fns";
 
 import { GameContext, GameProvider } from "../gameProvider";
 
-function Questionmark() {
-    return (
-        <div>
-            <img src="/help.png" />
-            help
-        </div>
-    );
-}
 let initialGameState = {
     updated: new Date(),
     showHelp: true,
@@ -43,118 +30,13 @@ let initialGameState = {
 };
 
 
-export function Title() {
-    const { showHelp } = useContext(GameContext);
-    return (
-        <div className="self-center flex space-x-5">
-            <div className="flex flex-col justify-center">
-                <h1 className="self-center text-2xl">{IntlMsg.game_name}</h1>
-                <h1 className="self-center text-2xl">Tamil Wordle</h1>
-            </div>
-            <div>
-                <a href="#" onClick={(e) => showHelp(true)}>
-                    <Questionmark />
-                </a>
-            </div>
-        </div>
-    );
-}
 
 export function Game({error}) {
 
-    const {gameState, persistGameState, server, end_point } = useContext(GameContext);
+    const {gameState, persistGameState, server, end_point, showSuccess } = useContext(GameContext);
 
-    function updateGameState(state) {
-        persistGameState(state);
-    }
-
-    console.log("words", gameState);
-
-    let [showHelp, updateShowHelp] = useState(true);
-    //let [gameState, updateGameState] = useGameState(word_length, end_point);
-    let [showModal, updateShowModal] = useState(false);
-    let [alert, updateAlert] = useState({ msg: "", show: false, status: "error" });
-    let showAlert = (status, msg) => updateAlert({ ...alert, msg: msg + "", status, show: true });
-
-
-    function onGameOver() {
-        updateShowModal(true);
-    }
-
-    async function onNewGuess(guess) {
-        gameState.triedWords[guess] = true;
-        updateGameState({ ...gameState });
-        let word = [];
-        guess.forUnicodeEach((x) => word.push(x));
-        try {
-            const res = await fetch(`${server}/${end_point}`, {
-                method: "POST",
-                mode: "cors",
-                cache: "no-cache",
-                headers: { "Content-Type": "application/json", Accept: "*/*" },
-                body: JSON.stringify(word),
-            });
-            if (res.status === 200) {
-                let data = await res.json();
-                gameState.words.push({ word: guess, result: data });
-                let pos = 0;
-                guess.forUnicodeEach((ch) => {
-                    if (!gameState.letterHint[ch]) gameState.letterHint[ch] = [];
-
-                    // update the hint
-                    let hint = gameState.letterHint[ch];
-                    if (hint.length < gameState.word_length) {
-                        for (let i = hint.length; i < gameState.word_length; i++) hint.push(States.LETTER_UNKNOWN);
-                    }
-                    if (hint[pos] === States.LETTER_UNKNOWN) hint[pos] = data[pos][0];
-                    if (data[pos] === States.LETTER_NOT_FOUND) {
-                        hint.fill(States.LETTER_NOT_FOUND);
-                    }
-
-                    // update pos hints
-                    if (gameState.posHint.length <= i + 1) {
-                        gameState.posHint.push([-1, -1]);
-                        gameState.posHint.push([-1, -1]);
-                    }
-                    if (data[pos].length > 1) {
-                        let posHint = gameState.posHint[pos];
-                        if (data[pos][1] === States.MEI_MATCHED) posHint[1] = getLetterPos(ch)[1];
-                        else if (data[pos][1] === States.UYIR_MATCHED) {
-                            posHint[0] = getLetterPos(ch)[0];
-                        }
-                    }
-
-                    pos += 1;
-                });
-                updateGameState({ ...gameState });
-            } else if (res.status === 202) {
-                let data = [];
-                let i = 0;
-                guess.forUnicodeEach((x) => {
-                    data.push([States.LETTER_MATCHED]);
-                    gameState.posHint[i] = getLetterPos[x];
-                    i += 1;
-                });
-                if (!gameState.over) {
-                    gameState.words.push({ word: guess, result: data });
-                    gameState.over = true;
-                    updateGameState({ ...gameState });
-                }
-                onGameOver();
-            }
-        } catch (error) {
-            gameState.triedWords[guess] = undefined;
-            updateGameState({ ...gameState });
-            showAlert("error", error);
-            console.error(error);
-        }
-    }
     return (
         <div className="flex flex-col justify-center space-y-2">
-            <Title />
-            <Alert status={alert.status} show={alert.show} onHide={() => updateAlert({ ...alert, show: false })}>
-                {alert.msg}
-            </Alert>
 
             {error ? (
                 <div className="rounded bg-pink-300 bold">{error}</div>
@@ -166,7 +48,6 @@ export function Game({error}) {
                     {!gameState.over ? (
                         <Input
                             word_length={gameState.word_length}
-                            onNewGuess={onNewGuess}
                             letterStatus={gameState.letterHint}
                             posHint={gameState.posHint}
                             onGameOver
@@ -174,7 +55,7 @@ export function Game({error}) {
                     ) : (
                         <div className="flex mx-auto justify-center">
                             <button
-                                onClick={(e) => updateShowModal(true)}
+                                onClick={(e) => showSuccess()}
                                 className="rounded bg-indigo-600 hover:bg-indigo-200 p-1 text-white"
                             >
                                 {IntlMsg.btn_game_over}
@@ -183,9 +64,6 @@ export function Game({error}) {
                     )}
                 </div>
             )}
-            <Modal show={showModal} onClose={() => updateShowModal(false)}>
-                <Success word_length={gameState.word_length} words={gameState.words} />
-            </Modal>
             <Help />
         </div>
     );

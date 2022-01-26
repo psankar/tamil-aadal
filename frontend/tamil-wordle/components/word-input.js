@@ -8,7 +8,7 @@ import { IntlMsg } from "../messages-ta";
 
 import {GameContext} from "../gameProvider";
 
-export function Input({ word_length, letterHint, onNewGuess, letterStatus, posHint }) {
+export function Input({ word_length, letterHint, letterStatus, posHint }) {
 
     const {guessWord, checkDuplicate} = useContext(GameContext);
 
@@ -23,7 +23,7 @@ export function Input({ word_length, letterHint, onNewGuess, letterStatus, posHi
             updateMsg(IntlMsg.msg_duplicate);
         } else {
             updateMsg("");
-            onNewGuess(word);
+            guessWord(word);
         }
         return false;
     }
