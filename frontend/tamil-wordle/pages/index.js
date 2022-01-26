@@ -42,61 +42,6 @@ let initialGameState = {
     posHint: [], // [ [row, col] ] - for each pos, holds the row/col match in the 19x13 tamil letter matrix
 };
 
-function useGameState(word_length, end_point) {
-    let [gameState, bUpdateGameState] = useState({ ...initialGameState, word_length });
-    let [loaded, updateLoaded] = useState(false);
-
-    function updateGameState(state) {
-        bUpdateGameState(state);
-        if (window && window.localStorage) {
-            window.localStorage.setItem(end_point, JSON.stringify({ ...state, updated: new Date() }));
-        }
-    }
-
-    function toReset(state, end_point) {
-        let startTime = { hours: 3, minutes: 30 };
-        let reset = false;
-        let today = new Date();
-        today = sub(today, startTime);
-        // reset the state everyday at 9:00 IST
-        let start = new Date();
-        start.setUTCHours(startTime.hours);
-        start.setUTCMinutes(startTime.minutes);
-        start = sub(start, startTime);
-
-        if (differenceInMinutes(today, start) < 0) {
-            start = sub(start, { hours: 24 });
-        }
-
-        if (state && state.updated) {
-            let lastUpdated = new Date(state.updated);
-            lastUpdated = sub(lastUpdated, startTime);
-            if (!isAfter(lastUpdated, start)) {
-                reset = true;
-            }
-        }
-        return reset;
-    }
-
-    useEffect(() => {
-        console.log("loading gamestate...", new Date(gameState?.updated).toUTCString(), loaded);
-        // reset the state everyday at 9:00 IST
-        let reset = toReset(gameState, end_point);
-        if (!loaded || reset) {
-            let state = window.localStorage.getItem(end_point);
-            let gs = JSON.parse(state) || { ...initialGameState, word_length };
-            if (toReset(gs, end_point)) {
-                reset = true;
-                console.log("resetting");
-                gs = { ...initialGameState, word_length };
-            }
-            bUpdateGameState({ ...gs });
-            updateLoaded(true);
-        }
-    }, [loaded]);
-
-    return [gameState, updateGameState];
-}
 
 export function Title() {
     const { showHelp } = useContext(GameContext);
@@ -115,9 +60,18 @@ export function Title() {
     );
 }
 
-export default function Home({ word_length, server, end_point, error }) {
+export function Game({error}) {
+
+    const {gameState, persistGameState, server, end_point } = useContext(GameContext);
+
+    function updateGameState(state) {
+        persistGameState(state);
+    }
+
+    console.log("words", gameState);
+
     let [showHelp, updateShowHelp] = useState(true);
-    let [gameState, updateGameState] = useGameState(word_length, end_point);
+    //let [gameState, updateGameState] = useGameState(word_length, end_point);
     let [showModal, updateShowModal] = useState(false);
     let [alert, updateAlert] = useState({ msg: "", show: false, status: "error" });
     let showAlert = (status, msg) => updateAlert({ ...alert, msg: msg + "", status, show: true });
@@ -152,8 +106,8 @@ export default function Home({ word_length, server, end_point, error }) {
 
                     // update the hint
                     let hint = gameState.letterHint[ch];
-                    if (hint.length < word_length) {
-                        for (let i = hint.length; i < word_length; i++) hint.push(States.LETTER_UNKNOWN);
+                    if (hint.length < gameState.word_length) {
+                        for (let i = hint.length; i < gameState.word_length; i++) hint.push(States.LETTER_UNKNOWN);
                     }
                     if (hint[pos] === States.LETTER_UNKNOWN) hint[pos] = data[pos][0];
                     if (data[pos] === States.LETTER_NOT_FOUND) {
@@ -198,7 +152,50 @@ export default function Home({ word_length, server, end_point, error }) {
             console.error(error);
         }
     }
+    return (
+        <div className="flex flex-col justify-center space-y-2">
+            <Title />
+            <Alert status={alert.status} show={alert.show} onHide={() => updateAlert({ ...alert, show: false })}>
+                {alert.msg}
+            </Alert>
 
+            {error ? (
+                <div className="rounded bg-pink-300 bold">{error}</div>
+            ) : (
+                <div className="flex flex-col justify-center space-y-2">
+                    <div className="flex flex-grow justify-center">
+                        <Tiles word_length={gameState.word_length} words={gameState.words} />
+                    </div>
+                    {!gameState.over ? (
+                        <Input
+                            word_length={gameState.word_length}
+                            onNewGuess={onNewGuess}
+                            checkDuplicate={checkDuplicate}
+                            letterStatus={gameState.letterHint}
+                            posHint={gameState.posHint}
+                            onGameOver
+                        />
+                    ) : (
+                        <div className="flex mx-auto justify-center">
+                            <button
+                                onClick={(e) => updateShowModal(true)}
+                                className="rounded bg-indigo-600 hover:bg-indigo-200 p-1 text-white"
+                            >
+                                {IntlMsg.btn_game_over}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+            <Modal show={showModal} onClose={() => updateShowModal(false)}>
+                <Success word_length={gameState.word_length} words={gameState.words} />
+            </Modal>
+            <Help />
+        </div>
+    );
+}
+
+export default function Home({ word_length, server, end_point, error }) {
     return (
         <div className="">
             <Head>
@@ -210,49 +207,7 @@ export default function Home({ word_length, server, end_point, error }) {
             <div className="container flex flex-col mx-auto h-screen">
                 <main className="main grow">
                     <GameProvider server={server} end_point={end_point}>
-                        <div className="flex flex-col justify-center space-y-2">
-                            <Title />
-                            <Alert
-                                status={alert.status}
-                                show={alert.show}
-                                onHide={() => updateAlert({ ...alert, show: false })}
-                            >
-                                {alert.msg}
-                            </Alert>
-
-                            {error ? (
-                                <div className="rounded bg-pink-300 bold">{error}</div>
-                            ) : (
-                                <div className="flex flex-col justify-center space-y-2">
-                                    <div className="flex flex-grow justify-center">
-                                        <Tiles word_length={gameState.word_length} words={gameState.words} />
-                                    </div>
-                                    {!gameState.over ? (
-                                        <Input
-                                            word_length={gameState.word_length}
-                                            onNewGuess={onNewGuess}
-                                            checkDuplicate={checkDuplicate}
-                                            letterStatus={gameState.letterHint}
-                                            posHint={gameState.posHint}
-                                            onGameOver
-                                        />
-                                    ) : (
-                                        <div className="flex mx-auto justify-center">
-                                            <button
-                                                onClick={(e) => updateShowModal(true)}
-                                                className="rounded bg-indigo-600 hover:bg-indigo-200 p-1 text-white"
-                                            >
-                                                {IntlMsg.btn_game_over}
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                            <Modal show={showModal} onClose={() => updateShowModal(false)}>
-                                <Success word_length={gameState.word_length} words={gameState.words} />
-                            </Modal>
-                            <Help />
-                        </div>
+                        <Game />
                     </GameProvider>
                 </main>
 
