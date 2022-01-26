@@ -1,12 +1,17 @@
 import ReactDOM from "react-dom";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import * as _ from "lodash";
 import * as UC from "../unicode-utils";
 import { UsedLetters, LetterHint } from "../components/used-letters";
 
 import { IntlMsg } from "../messages-ta";
 
-export function Input({ word_length, letterHint, onNewGuess, checkDuplicate, letterStatus, posHint }) {
+import {GameContext} from "../gameProvider";
+
+export function Input({ word_length, letterHint, onNewGuess, letterStatus, posHint }) {
+
+    const {guessWord, checkDuplicate} = useContext(GameContext);
+
     let [word, updateWord] = useState("");
     let [msg, updateMsg] = useState("");
 

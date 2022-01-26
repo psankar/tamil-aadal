@@ -76,9 +76,6 @@ export function Game({error}) {
     let [alert, updateAlert] = useState({ msg: "", show: false, status: "error" });
     let showAlert = (status, msg) => updateAlert({ ...alert, msg: msg + "", status, show: true });
 
-    function checkDuplicate(word) {
-        return gameState.triedWords[word] !== undefined;
-    }
 
     function onGameOver() {
         updateShowModal(true);
@@ -170,7 +167,6 @@ export function Game({error}) {
                         <Input
                             word_length={gameState.word_length}
                             onNewGuess={onNewGuess}
-                            checkDuplicate={checkDuplicate}
                             letterStatus={gameState.letterHint}
                             posHint={gameState.posHint}
                             onGameOver

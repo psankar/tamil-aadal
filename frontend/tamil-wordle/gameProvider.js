@@ -29,6 +29,9 @@ export function GameProvider(props) {
     }
 
     async function guessWord(guess) {}
+    function checkDuplicate(word) {
+        return gameState.triedWords[word] !== undefined;
+    }
     function showError(error) {}
     function showHelp(show) {
         updateGameState({ ...gameState, showHelp: show });
@@ -78,7 +81,7 @@ export function GameProvider(props) {
 
     return (
         <GameContext.Provider
-            value={{ gameState, showHelp, persistGameState, server: props.server, end_point: props.end_point }}
+            value={{ gameState, showHelp, persistGameState, server: props.server, end_point: props.end_point, checkDuplicate }}
         >
             <div>{props.children}</div>
         </GameContext.Provider>
