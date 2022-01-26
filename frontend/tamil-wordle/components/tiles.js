@@ -7,13 +7,13 @@ import { getLetterPos } from "../tamil-letters";
 
 import { IntlMsg } from "../messages-ta";
 
-import {GameContext} from "../gameProvider";
+import { GameContext } from "../gameProvider";
 
 const emojimap = {
-    LETTER_NOT_FOUND: { UYIR_MATCHED: 0x1f5a4, MEI_MATCHED: 0x26AB },
-    LETTER_MATCHED: { UYIR_MATCHED: 0x1F49A, MEI_MATCHED: 0x1F7E2 },
-    LETTER_ELSEWHERE: { UYIR_MATCHED: 0x1F49B, MEI_MATCHED: 0x1F7E1 },
-    LETTER_UNKNOWN: { UYIR_MATCHED: 0x1F49C, MEI_MATCHED: 0x1F7E3 },
+    LETTER_NOT_FOUND: { UYIR_MATCHED: 0x1f5a4, MEI_MATCHED: 0x26ab },
+    LETTER_MATCHED: { UYIR_MATCHED: 0x1f49a, MEI_MATCHED: 0x1f7e2 },
+    LETTER_ELSEWHERE: { UYIR_MATCHED: 0x1f49b, MEI_MATCHED: 0x1f7e1 },
+    LETTER_UNKNOWN: { UYIR_MATCHED: 0x1f49c, MEI_MATCHED: 0x1f7e3 },
 };
 
 function mapStateToUIProperties(letterState, posState, uyirMeiHintsUsed = false) {
@@ -44,10 +44,9 @@ function mapStateToUIProperties(letterState, posState, uyirMeiHintsUsed = false)
         border = "border-y-4 border-green-500";
     }
 
-    if(uyirMeiHintsUsed && posState) {
+    if (uyirMeiHintsUsed && posState) {
         let cp = emojimap[letterState][posState];
-        if(cp && !isNaN(cp))
-            emoji = String.fromCodePoint(cp);
+        if (cp && !isNaN(cp)) emoji = String.fromCodePoint(cp);
     }
 
     return { color, anim, emoji, border };
@@ -61,9 +60,9 @@ export function Tile({
     isResult = false,
     anim = "animate-none",
     isHint = false,
+    forHelpPage = false,
 }) {
-
-    const {gameState} = useContext(GameContext);
+    const { gameState } = useContext(GameContext);
 
     let order = { unknown: 0, notthere: 1, jumbled: 2, correct: 3 };
     let { color, border, emoji } = mapStateToUIProperties(letterState, posState);
@@ -85,15 +84,14 @@ export function Tile({
         }
     }
     let st = `tile-${color} ${anim}`;
-    if(gameState.showUyirMeiHints) {
-        st +=  ` ${border}`;
+    if (gameState.showUyirMeiHints || forHelpPage) {
+        st += ` ${border}`;
     }
     return <div className={st}>{isResult ? String.fromCodePoint(0x1f7e9) : letter}</div>;
 }
 
-export function Tiles({ words, word_length, isResult = false, heading = true }) {
-
-    const {gameState}  = useContext(GameContext);
+export function Tiles({ words, word_length, isResult = false, heading = true, forHelpPage = false }) {
+    const { gameState } = useContext(GameContext);
 
     const divEl = useRef(null);
     const resultTilesPreRef = useRef(null);
@@ -113,10 +111,15 @@ export function Tiles({ words, word_length, isResult = false, heading = true }) 
                         letterState={result[i][0]}
                         posState={result[i].length > 1 ? result[i][1] : undefined}
                         letter={w}
+                        forHelpPage={forHelpPage}
                     ></Tile>
                 );
             } else {
-                let { emoji } = mapStateToUIProperties(result[i][0], result[i].length > 1 ? result[i][1] : undefined, gameState.uyirMeiHintsUsed);
+                let { emoji } = mapStateToUIProperties(
+                    result[i][0],
+                    result[i].length > 1 ? result[i][1] : undefined,
+                    gameState.uyirMeiHintsUsed
+                );
                 wordTiles.push(emoji);
             }
             i += 1;
