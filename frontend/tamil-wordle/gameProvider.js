@@ -58,6 +58,15 @@ export function GameProvider(props) {
             });
             if (res.status === 200) {
                 let data = await res.json();
+                if(props.end_point === "verify-word") { 
+                    // legacy non-uyirmei, augment the data
+                    // similar to uyirmei-verify-word result
+                    let newData = []
+                    data.forEach(w => {
+                        newData.push([w]);
+                    });
+                    data = newData;
+                }
                 gameState.words.push({ word: guess, result: data });
                 let pos = 0;
                 guess.forUnicodeEach((ch) => {
