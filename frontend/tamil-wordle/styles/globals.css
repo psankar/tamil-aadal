@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+    padding: 0;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans,
+        Helvetica Neue, sans-serif;
+    @apply text-lg
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.g1 {
+    @apply grid grid-cols-1 gap-2 overflow-auto max-h-screen;
+}
+.g2 {
+    @apply grid grid-cols-2 gap-2 overflow-auto max-h-screen;
+}
+.g3 {
+    @apply grid grid-cols-3 gap-2 overflow-auto max-h-screen;
+}
+.g4 {
+    @apply grid grid-cols-4 gap-2 overflow-auto max-h-screen;
+}
+.g5 {
+    @apply grid grid-cols-5 gap-2 overflow-auto max-h-screen;
+}
+.g6 {
+    @apply grid grid-cols-6 gap-2 overflow-auto max-h-screen;
+}
+.g7 {
+    @apply grid grid-cols-7 gap-2 overflow-auto max-h-screen;
+}
+.g8 {
+    @apply grid grid-cols-8 gap-2 overflow-auto max-h-screen;
+}
+.g9 {
+    @apply grid grid-cols-9 gap-2 overflow-auto max-h-screen;
+}
+.g10 {
+    @apply grid grid-cols-10 gap-2 overflow-auto max-h-screen;
+}
+
+.tile-gray {
+    @apply rounded bg-gray-300 p-1;
+    text-align: center;
+}
+.tile-indigo {
+    @apply rounded bg-indigo-300 p-1;
+}
+
+.tile-unknown {
+    @apply rounded bg-pink-200 p-1;
+    text-align: center;
+}
+.tile-jumbled {
+    @apply rounded bg-yellow-300 p-1;
+    text-align: center;
+}
+.tile-correct {
+    @apply rounded bg-green-300 p-1;
+    text-align: center;
+}
+.tile-notthere {
+    @apply rounded bg-gray-600 p-1 text-slate-400;
+    text-align: center;
+}
+
+.tile-blue {
+    @apply rounded bg-blue-300 p-1;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  background-color: rgba(0, 0, 0, 1);
+}
+
+.alert-error {
+    @apply bg-red-200 rounded-lg py-5 px-6 mb-3 text-base text-yellow-700 inline-flex items-center w-full ;
+}
+.alert-warning {
+    @apply bg-yellow-100 rounded-lg py-5 px-6 mb-3 text-base text-yellow-700 inline-flex items-center w-full ;
+}
+.alert-info {
+    @apply bg-green-100 rounded-lg py-5 px-6 mb-3 text-base text-yellow-700 inline-flex items-center w-full ;
+}
+
+.animate-flip {
+    animation: flip 3s linear infinite;
+}
+@keyframes flip {
+    from {
+        transform: rotateY(0deg);
+    }
+    to {
+        transform: rotateY(350deg);
+    }
+}
+
+.animate-focus {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
