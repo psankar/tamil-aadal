@@ -7,12 +7,10 @@ import ReactDOM from "react-dom";
 import * as UC from "../unicode-utils";
 import { IntlMsg } from "../messages-ta";
 
-import { Help } from "../components/help-page";
-import { Input } from "../components/word-input";
+import { InputArea } from "../components/word-input";
 import { Tile, Tiles } from "../components/tiles";
 
 import { useState, useRef, useEffect, useContext } from "react";
-
 
 import { zonedTimeToUtc } from "date-fns-tz";
 import { isAfter, sub, differenceInDays, differenceInMinutes } from "date-fns";
@@ -29,47 +27,22 @@ let initialGameState = {
     posHint: [], // [ [row, col] ] - for each pos, holds the row/col match in the 19x13 tamil letter matrix
 };
 
-
-
-export function Game({error}) {
-
-    const {gameState, persistGameState, server, end_point, showSuccess } = useContext(GameContext);
+export function Game() {
+    const { gameState, persistGameState, server, end_point, showSuccess } = useContext(GameContext);
 
     return (
         <div className="flex flex-col justify-center space-y-2">
-
-            {error ? (
-                <div className="rounded bg-pink-300 bold">{error}</div>
-            ) : (
-                <div className="flex flex-col justify-center space-y-2">
-                    <div className="flex flex-grow justify-center">
-                        <Tiles word_length={gameState.word_length} words={gameState.words} />
-                    </div>
-                    {!gameState.over ? (
-                        <Input
-                            word_length={gameState.word_length}
-                            letterStatus={gameState.letterHint}
-                            posHint={gameState.posHint}
-                            onGameOver
-                        />
-                    ) : (
-                        <div className="flex mx-auto justify-center">
-                            <button
-                                onClick={(e) => showSuccess()}
-                                className="rounded bg-indigo-600 hover:bg-indigo-200 p-1 text-white"
-                            >
-                                {IntlMsg.btn_game_over}
-                            </button>
-                        </div>
-                    )}
+            <div className="flex flex-col justify-center space-y-2">
+                <div className="flex flex-grow justify-center">
+                    <Tiles word_length={gameState.word_length} words={gameState.words} />
                 </div>
-            )}
-            <Help />
+            </div>
+            <InputArea />
         </div>
     );
 }
 
-export default function Home({ word_length, server, end_point, error }) {
+export default function Home({ word_length, server, end_point, loadError }) {
     return (
         <div className="">
             <Head>
@@ -80,9 +53,13 @@ export default function Home({ word_length, server, end_point, error }) {
 
             <div className="container flex flex-col mx-auto h-screen">
                 <main className="main grow">
-                    <GameProvider server={server} end_point={end_point}>
-                        <Game />
-                    </GameProvider>
+                    {loadError ? (
+                        <div className="rounded bg-pink-300 bold">{loadError}</div>
+                    ) : (
+                        <GameProvider server={server} end_point={end_point}>
+                            <Game loadError={loadError} />
+                        </GameProvider>
+                    )}
                 </main>
 
                 <footer>
@@ -126,7 +103,7 @@ export async function getServerSideProps(context) {
         console.log(err);
         return {
             props: {
-                error: "Error communicating with server",
+                loadError: "Error communicating with server",
             },
         };
     }

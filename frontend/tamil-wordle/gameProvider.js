@@ -9,6 +9,7 @@ import { Modal } from "./components/modal";
 import { Success } from "./components/success-message";
 import { Alert } from "./components/alert";
 import { Title } from "./components/title";
+import { Help } from "./components/help-page";
 
 import { zonedTimeToUtc } from "date-fns-tz";
 import { isAfter, sub, differenceInDays, differenceInMinutes } from "date-fns";
@@ -185,6 +186,7 @@ export function GameProvider(props) {
                 {alert.msg}
             </Alert>
             <div>{props.children}</div>
+            <Help />
             <Modal show={showModal} onClose={() => updateShowModal(false)}>
                 <Success word_length={gameState.word_length} words={gameState.words} />
             </Modal>

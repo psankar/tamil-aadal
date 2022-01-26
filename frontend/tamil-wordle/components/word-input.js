@@ -6,18 +6,17 @@ import { UsedLetters, LetterHint } from "../components/used-letters";
 
 import { IntlMsg } from "../messages-ta";
 
-import {GameContext} from "../gameProvider";
+import { GameContext } from "../gameProvider";
 
-export function Input({ word_length, letterHint, letterStatus, posHint }) {
-
-    const {guessWord, checkDuplicate} = useContext(GameContext);
+export function Input() {
+    const { gameState, guessWord, checkDuplicate } = useContext(GameContext);
 
     let [word, updateWord] = useState("");
     let [msg, updateMsg] = useState("");
 
     function validate(e) {
         e.preventDefault();
-        if (_.trim(word, " ").unicodeLength() != word_length) {
+        if (_.trim(word, " ").unicodeLength() != gameState.word_length) {
             updateMsg(IntlMsg.msg_invalid_length);
         } else if (checkDuplicate(word)) {
             updateMsg(IntlMsg.msg_duplicate);
@@ -52,7 +51,27 @@ export function Input({ word_length, letterHint, letterStatus, posHint }) {
                     {IntlMsg.btn_try}
                 </button>
             </div>
-            <LetterHint word_length={word_length} word={word} letterStatus={letterStatus} posHint={posHint} />
+            <LetterHint word_length={gameState.word_length} word={word} letterStatus={gameState.letterHint} posHint={gameState.posHint} />
+        </div>
+    );
+}
+
+export function InputArea() {
+    const { gameState, persistGameState, server, end_point, showSuccess } = useContext(GameContext);
+    return (
+        <div>
+            {!gameState.over ? (
+                <Input />
+            ) : (
+                <div className="flex mx-auto justify-center">
+                    <button
+                        onClick={(e) => showSuccess()}
+                        className="rounded bg-indigo-600 hover:bg-indigo-200 p-1 text-white"
+                    >
+                        {IntlMsg.btn_game_over}
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
