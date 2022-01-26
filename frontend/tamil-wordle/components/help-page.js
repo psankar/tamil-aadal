@@ -1,18 +1,22 @@
 import ReactDOM from "react-dom";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import * as UC from "../unicode-utils";
 import { Tile, Tiles } from "../components/tiles";
 import { IntlMsg } from "../messages-ta";
 import { States } from "../game";
+import {GameContext} from "../gameProvider";
 
-export function Help({ show, onClose, word_length=3 }) {
-    return show ? (
+export function Help() {
+
+    const {showHelp, state} = useContext(GameContext)
+
+    return state.showHelp ? (
         <div className="overlay">
             <div className="flex flex-col px-1 space-y-3 auto w-80 h-100 flex-grow">
                 <div className="space-y-2">
                     <h2 className="text-2xl">விளையாடும் முறை</h2>
                     <div>மறைந்திருக்கும் சொல்லை கண்டு பிடிக்கவும்! </div>
-                    <div>{word_length} எழுத்து(க்)கள் அளவு நீளமான தமிழ்ச்சொல்லை, தமிழில் தட்டச்சு செய்து, &apos;சரி பார்க்க&apos; பொத்தானை அழுத்தவும்</div>
+                    <div>{state.word_length} எழுத்து(க்)கள் அளவு நீளமான தமிழ்ச்சொல்லை, தமிழில் தட்டச்சு செய்து, &apos;சரி பார்க்க&apos; பொத்தானை அழுத்தவும்</div>
                     <div>ஒவ்வொரு முறையும், நீங்கள் முயற்சித்த சொல்லின் எழுத்துக்கள் கொண்ட கட்டத்தின் வண்ணம் கீழ்கண்டவாறு மாறும்</div>
                     <hr/>
                     எடுத்துக்காட்டாக...
@@ -40,7 +44,7 @@ export function Help({ show, onClose, word_length=3 }) {
                     
                 </div>
                 <div className="self-center">
-                    <button className="rounded bg-green-300 text-blue-800 px-1" onClick={(e) => onClose()}>
+                    <button className="rounded bg-green-300 text-blue-800 px-1" onClick={(e) => showHelp(false)}>
                     Close
                     </button>
                 </div>
