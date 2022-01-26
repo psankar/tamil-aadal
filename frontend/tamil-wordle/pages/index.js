@@ -17,16 +17,6 @@ import { isAfter, sub, differenceInDays, differenceInMinutes } from "date-fns";
 
 import { GameContext, GameProvider } from "../gameProvider";
 
-let initialGameState = {
-    updated: new Date(),
-    showHelp: true,
-    over: false,
-    words: [], // [{word, status}]
-    triedWords: {}, // map of tried Words for checking duplicates
-    letterHint: {}, // {leter: [CORRECT, WRONG_PLACE, NOT THERE] for the given pos
-    posHint: [], // [ [row, col] ] - for each pos, holds the row/col match in the 19x13 tamil letter matrix
-};
-
 export function Game() {
     const { gameState, persistGameState, server, end_point, showSuccess } = useContext(GameContext);
 

@@ -12,6 +12,8 @@ import { Alert } from "./components/alert";
 import { Title } from "./components/title";
 import { Help } from "./components/help-page";
 
+import { IntlMsg } from "./messages-ta";
+
 import { zonedTimeToUtc } from "date-fns-tz";
 import { isAfter, sub, differenceInDays, differenceInMinutes } from "date-fns";
 
@@ -20,6 +22,7 @@ let initialState = {
     showHelp: true,
     showOnStart: true,
     over: false,
+    showUyirMeiHints: false,
     words: [], // [{word, status}]
     triedWords: {}, // map of tried Words for checking duplicates
     letterHint: {}, // {leter: [CORRECT, WRONG_PLACE, NOT THERE] for the given pos
@@ -165,6 +168,16 @@ export function GameProvider(props) {
         return status;
     }
 
+    // toggle uyirmei hints. Record that the player used hints permenantly
+    // if game is not over
+    function toggleHints() {
+        let st = {...gameState, showUyirMeiHints: !gameState.showUyirMeiHints};
+        if(!gameState.over) {
+            st.uyirMeiHintsUsed = true;
+        }
+        persistGameState(st)
+    }
+
     // update game word length for the day
     useEffect(async () => {
         console.log("loading gamestate...", new Date(gameState?.updated).toUTCString());
@@ -198,6 +211,9 @@ export function GameProvider(props) {
             }}
         >
             <Title />
+            <div className="self-center p-2 flex justify-center flex-grow">
+                <button onClick={(e) => toggleHints()} className="rounded bg-indigo-300 p-2">{IntlMsg.toggle_uyirmei_hints}</button>
+            </div>
             <Alert status={alert.status} show={alert.show} onHide={() => updateAlert({ ...alert, show: false })}>
                 {alert.msg}
             </Alert>

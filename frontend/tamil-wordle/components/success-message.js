@@ -9,7 +9,7 @@ export function Success({ word_length, words }) {
     return (
         <div>
             <div>{successMsg} </div>
-            <div>
+            <div className="pt-2 pb-3">
                 <Tiles word_length={word_length} words={words} isResult={true} />
             </div>
         </div>

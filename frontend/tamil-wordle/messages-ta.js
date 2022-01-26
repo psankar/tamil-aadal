@@ -5,5 +5,6 @@ export const IntlMsg = {
     btn_final_message: "சரியான சொல்லைக் கண்டுபிடித்துவிட்டீர்கள்!!! If you are interested, copy and paste the emoji table to social media!",
     msg_invalid_length: "*சரியான எண்ணிக்கையிலான எழுத்துக்களை இடவும்",
     msg_duplicate: "*ஏற்கனவே முயன்றது!",
-    try_uyirmei: "Try உயிர்மெய் version"
+    try_uyirmei: "Try உயிர்மெய் version",
+    toggle_uyirmei_hints: "Toggle உயிர்மெய் Hints"
 }

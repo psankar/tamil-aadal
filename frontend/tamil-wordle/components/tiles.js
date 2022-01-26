@@ -1,9 +1,13 @@
 import * as _ from "lodash";
 import ReactDOM from "react-dom";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import * as UC from "../unicode-utils";
 import { States } from "../game";
 import { getLetterPos } from "../tamil-letters";
+
+import { IntlMsg } from "../messages-ta";
+
+import {GameContext} from "../gameProvider";
 
 const emojimap = {
     LETTER_NOT_FOUND: { UYIR_MATCHED: 0x1f5a4, MEI_MATCHED: 0x26AB },
@@ -12,7 +16,7 @@ const emojimap = {
     LETTER_UNKNOWN: { UYIR_MATCHED: 0x1F49C, MEI_MATCHED: 0x1F7E3 },
 };
 
-function mapStateToUIProperties(letterState, posState) {
+function mapStateToUIProperties(letterState, posState, uyirMeiHintsUsed = false) {
     let color = "notthere";
     let anim = "animate-flip";
     let emoji = String.fromCodePoint(0x2b1b);
@@ -40,7 +44,7 @@ function mapStateToUIProperties(letterState, posState) {
         border = "border-y-4 border-green-500";
     }
 
-    if(posState) {
+    if(uyirMeiHintsUsed && posState) {
         let cp = emojimap[letterState][posState];
         if(cp && !isNaN(cp))
             emoji = String.fromCodePoint(cp);
@@ -58,6 +62,9 @@ export function Tile({
     anim = "animate-none",
     isHint = false,
 }) {
+
+    const {gameState} = useContext(GameContext);
+
     let order = { unknown: 0, notthere: 1, jumbled: 2, correct: 3 };
     let { color, border, emoji } = mapStateToUIProperties(letterState, posState);
     if (globalLetterState && globalLetterState[letter]) {
@@ -77,11 +84,17 @@ export function Tile({
             border = "border-y-4 border-green-500";
         }
     }
-    let st = `tile-${color} ${anim} ${border}`;
+    let st = `tile-${color} ${anim}`;
+    if(gameState.showUyirMeiHints) {
+        st +=  ` ${border}`;
+    }
     return <div className={st}>{isResult ? String.fromCodePoint(0x1f7e9) : letter}</div>;
 }
 
 export function Tiles({ words, word_length, isResult = false, heading = true }) {
+
+    const {gameState}  = useContext(GameContext);
+
     const divEl = useRef(null);
     const resultTilesPreRef = useRef(null);
     let wordTiles = [];
@@ -103,7 +116,7 @@ export function Tiles({ words, word_length, isResult = false, heading = true }) 
                     ></Tile>
                 );
             } else {
-                let { emoji } = mapStateToUIProperties(result[i][0], result[i].length > 1 ? result[i][1] : undefined);
+                let { emoji } = mapStateToUIProperties(result[i][0], result[i].length > 1 ? result[i][1] : undefined, gameState.uyirMeiHintsUsed);
                 wordTiles.push(emoji);
             }
             i += 1;
@@ -121,7 +134,7 @@ export function Tiles({ words, word_length, isResult = false, heading = true }) 
             _.map(_.chunk(wordTiles, word_length), (x) => _.join(x, "")),
             "\n"
         );
-        shareText = `Tamil Wordle (${words.length} tries)\n${tileMatrix}`;
+        shareText = `${IntlMsg.game_name} (${words.length} tries)\n${tileMatrix}`;
     }
 
     async function OnCopyClick() {
@@ -142,7 +155,7 @@ export function Tiles({ words, word_length, isResult = false, heading = true }) 
             {wordTiles}
         </div>
     ) : (
-        <div ref={resultTilesPreRef} className="space-x-2">
+        <div ref={resultTilesPreRef} className="space-x-2 space-y-2">
             <pre>{shareText}</pre>
             <button
                 className="rounded bg-green-300 p-1 text-blue-800 hover:bg-green-500"
