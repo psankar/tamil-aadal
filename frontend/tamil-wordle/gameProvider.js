@@ -193,7 +193,6 @@ export function GameProvider(props) {
         let state = window.localStorage.getItem(props.end_point);
         let gs = JSON.parse(state) || { ...initialState, word_length: props.word_length };
         if (toReset(gs, props.end_point)) {
-            reset = true;
             console.log("resetting");
             gs = { ...initialState, word_length: props.word_length };
         }
