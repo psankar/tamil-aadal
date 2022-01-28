@@ -33,6 +33,7 @@ export const GameContext = React.createContext(initialState);
 
 export function GameProvider(props) {
     const [gameState, updateGameState] = useState(initialState);
+    const [uyirMeiEnabled, updateUyirMeiEnabled] = useState(true);
     const [showModal, updateShowModal] = useState(false);
     const [alert, updateAlert] = useState({ msg: "", show: false, status: "error" });
 
@@ -58,11 +59,11 @@ export function GameProvider(props) {
             });
             if (res.status === 200) {
                 let data = await res.json();
-                if(props.end_point === "verify-word") { 
+                if (props.end_point === "verify-word") {
                     // legacy non-uyirmei, augment the data
                     // similar to uyirmei-verify-word result
-                    let newData = []
-                    data.forEach(w => {
+                    let newData = [];
+                    data.forEach((w) => {
                         newData.push([w]);
                     });
                     data = newData;
@@ -89,9 +90,9 @@ export function GameProvider(props) {
                     }
                     if (data[pos].length > 1) {
                         let posHint = gameState.posHint[pos];
-                        if (data[pos][1] === States.MEI_MATCHED) posHint[1] = getLetterPos(ch)[1];
+                        if (data[pos][1] === States.MEI_MATCHED) posHint[0] = getLetterPos(ch)[0];
                         else if (data[pos][1] === States.UYIR_MATCHED) {
-                            posHint[0] = getLetterPos(ch)[0];
+                            posHint[1] = getLetterPos(ch)[1];
                         }
                     }
 
@@ -180,11 +181,13 @@ export function GameProvider(props) {
     // toggle uyirmei hints. Record that the player used hints permenantly
     // if game is not over
     function toggleHints() {
-        let st = {...gameState, showUyirMeiHints: !gameState.showUyirMeiHints};
-        if(!gameState.over) {
-            st.uyirMeiHintsUsed = true;
+        let st = { ...gameState, showUyirMeiHints: !gameState.showUyirMeiHints };
+        if (!gameState.over) {
+            st.showUyirMeiHints = true;
+            updateUyirMeiEnabled(false);
         }
-        persistGameState(st)
+        persistGameState(st);
+        console.log("toggled");
     }
 
     // update game word length for the day
@@ -195,6 +198,7 @@ export function GameProvider(props) {
         if (toReset(gs, props.end_point)) {
             console.log("resetting");
             gs = { ...initialState, word_length: props.word_length };
+            updateUyirMeiEnabled(true);
         }
         gameState = gs;
         updateGameState({ ...gs });
@@ -203,6 +207,10 @@ export function GameProvider(props) {
         const data = await res.json();
         updateGameState({ ...gameState, word_length: data.Length, showOnStart: false });
     }, []);
+
+
+    let disabled = "form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2"
+    if (!uyirMeiEnabled) disabled = "text-gray-300 border-gray-300";
 
     return (
         <GameContext.Provider
@@ -220,7 +228,18 @@ export function GameProvider(props) {
         >
             <Title />
             <div className="self-center p-2 flex justify-center flex-grow">
-                <button onClick={(e) => toggleHints()} className="rounded bg-indigo-300 p-2">{IntlMsg.toggle_uyirmei_hints}</button>
+                <div className="form-check p-2">
+                    <input
+                        type="checkbox"
+                        className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer ${disabled}"
+                        onClick={(e) => toggleHints()}
+                        id="chk"
+                        checked={gameState.showUyirMeiHints}
+                    />
+                    <label className={disabled} htmlFor="chk">
+                        {IntlMsg.toggle_uyirmei_hints}
+                    </label>
+                </div>
             </div>
             <Alert status={alert.status} show={alert.show} onHide={() => updateAlert({ ...alert, show: false })}>
                 {alert.msg}

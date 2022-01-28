@@ -65,7 +65,7 @@ export function Tile({
     const { gameState } = useContext(GameContext);
 
     let order = { unknown: 0, notthere: 1, jumbled: 2, correct: 3 };
-    let { color, border, emoji } = mapStateToUIProperties(letterState, posState);
+    let { color, border, emoji } = mapStateToUIProperties(letterState, posState, gameState.showUyirMeiHints);
     if (globalLetterState && globalLetterState[letter]) {
         globalLetterState[letter].forEach((st) => {
             let m = mapStateToUIProperties(st);
@@ -74,13 +74,14 @@ export function Tile({
             }
         });
     }
+    console.log("posHint", letter, getLetterPos(letter), posState);
     if (isHint && posState) {
         let letterPos = getLetterPos(letter);
         if (letterPos && posState[0] === letterPos[0]) {
-            border = "border-x-4 border-green-500";
+            border = "border-y-4 border-green-500";
         }
         if (letterPos && posState[1] === letterPos[1]) {
-            border = "border-y-4 border-green-500";
+            border = "border-x-4 border-green-500";
         }
     }
     let st = `tile-${color} ${anim}`;
@@ -118,7 +119,7 @@ export function Tiles({ words, word_length, isResult = false, heading = true, fo
                 let { emoji } = mapStateToUIProperties(
                     result[i][0],
                     result[i].length > 1 ? result[i][1] : undefined,
-                    gameState.uyirMeiHintsUsed
+                    gameState.showUyirMeiHints
                 );
                 wordTiles.push(emoji);
             }
@@ -190,7 +191,7 @@ export function TilesHint({ word, word_length, status, letterStatus, posHint }) 
                 <Tile
                     letter={x}
                     letterState={status[i]}
-                    posState={posHint && posHint.length > i ? posHint[i] : undefined}
+                    posState={posHint && posHint.length > 0 ? posHint[i] : posHint}
                     globalLetterState={letterStatus}
                     anim={anim}
                     isHint={true}
