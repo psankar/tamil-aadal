@@ -182,10 +182,10 @@ export function GameProvider(props) {
     // if game is not over
     function toggleHints() {
         let st = { ...gameState, showUyirMeiHints: !gameState.showUyirMeiHints };
-        if (!gameState.over) {
-            st.showUyirMeiHints = true;
-            updateUyirMeiEnabled(false);
-        }
+        //if (!gameState.over) {
+        //   st.showUyirMeiHints = true;
+        //   updateUyirMeiEnabled(false);
+        //}
         persistGameState(st);
         console.log("toggled");
     }
