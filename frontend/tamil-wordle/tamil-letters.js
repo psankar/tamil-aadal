@@ -350,7 +350,6 @@ export const Letters = [
 ];
 
 export function getLetterPos(letter) {
-    console.log("here", letterToPos);
     if(_.isEmpty(letterToPos)) {
         for(let i=0; i<Letters.length; i++) {
             for(let j=0; j<Letters[i].length; j++) {
