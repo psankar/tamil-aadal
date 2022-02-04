@@ -7,12 +7,15 @@ import { UsedLetters, LetterHint } from "../components/used-letters";
 import { IntlMsg } from "../messages-ta";
 
 import { GameContext } from "../gameProvider";
+import { useKeyboard } from "./keyboard";
 
 export function Input() {
     const { gameState, guessWord, checkDuplicate } = useContext(GameContext);
 
     let [word, updateWord] = useState("");
     let [msg, updateMsg] = useState("");
+
+    let { OnScreenKeyboard } = useKeyboard(word, updateWord);
 
     function validate(e) {
         e.preventDefault();
@@ -45,6 +48,7 @@ export function Input() {
                     className="rounded border-solid border-2 text-pink-500"
                     onChange={(e) => updateWord(e.target.value)}
                     onKeyUp={(e) => onKeyUp(e)}
+                    value={word}
                 />
                 <button
                     className="rounded bg-indigo-300 px-1 hover:bg-indigo-500"
@@ -53,7 +57,13 @@ export function Input() {
                     {IntlMsg.btn_try}
                 </button>
             </div>
-            <LetterHint word_length={gameState.word_length} word={word} letterStatus={gameState.letterHint} posHint={gameState.posHint} />
+            <LetterHint
+                word_length={gameState.word_length}
+                word={word}
+                letterStatus={gameState.letterHint}
+                posHint={gameState.posHint}
+            />
+            <OnScreenKeyboard />
         </div>
     );
 }
