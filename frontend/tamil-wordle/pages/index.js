@@ -39,6 +39,7 @@ export default function Home({ word_length, server, end_point, loadError }) {
                 <title>Tamil Wordle</title>
                 <meta name="description" content="A game with tamil words" />
                 <link rel="icon" href="/favicon.ico" />
+                <link rel="preload" href="/fonts/NotoSansTamil/NotoSansTamil-Regular.ttf" as="font" crossOrigin="" />
             </Head>
 
             <div className="container flex flex-col mx-auto h-screen">

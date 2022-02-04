@@ -42,7 +42,7 @@ export function Input() {
     return (
         <div className="flex flex-col w-full justify-center items-center gap-1">
             <div className="text-pink-700">{msg}</div>
-            <div>
+            <div className="flex flex-row">
                 <input
                     className="rounded border-solid border-2 text-pink-500"
                     onChange={(e) => updateWord(e.target.value)}
