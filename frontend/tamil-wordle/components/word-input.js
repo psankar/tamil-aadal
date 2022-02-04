@@ -38,7 +38,6 @@ export function Input() {
         }
     }
 
-    console.log("posHint full", gameState.posHint);
 
     return (
         <div className="flex flex-col w-full justify-center items-center gap-1">

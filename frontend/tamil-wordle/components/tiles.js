@@ -74,7 +74,7 @@ export function Tile({
             }
         });
     }
-    console.log("posHint", letter, getLetterPos(letter), posState);
+    //console.log("posHint", letter, getLetterPos(letter), posState);
     if (isHint && posState) {
         let letterPos = getLetterPos(letter);
         if (letterPos && posState[0] === letterPos[0]) {
