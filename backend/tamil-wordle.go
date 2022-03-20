@@ -10,7 +10,7 @@ import (
 )
 
 func getWordForToday() string {
-	return "மூக்குத்தி"
+	return "பைந்தமிழ்"
 }
 
 const (
