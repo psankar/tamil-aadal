@@ -15,9 +15,9 @@ export function Help() {
             <div className="flex flex-col px-1 space-y-3 auto w-80 h-100 flex-grow">
                 <div className="space-y-2"> 
                     <h2 className="text-2xl">விளையாடும் முறை</h2>
-                    <div>மறைந்திருக்கும் சொல்லை கண்டு பிடிக்கவும்! </div>
+                    <div>மறைந்திருக்கும் சொல்லைக் கண்டு பிடிக்கவும்! </div>
                     <div>{gameState.word_length} எழுத்து(க்)கள் அளவு நீளமான தமிழ்ச்சொல்லை, தமிழில் தட்டச்சு செய்து, &apos;சரி பார்க்க&apos; பொத்தானை அழுத்தவும்</div>
-                    <div>ஒவ்வொரு முறையும், நீங்கள் முயற்சித்த சொல்லின் எழுத்துக்கள் கொண்ட கட்டத்தின் வண்ணம் கீழ்கண்டவாறு மாறும்</div>
+                    <div>ஒவ்வொரு முறையும், நீங்கள் முயன்ற சொல்லின் எழுத்துகள் கொண்ட கட்டத்தின் வண்ணம் கீழ்கண்டவாறு மாறும்</div>
                     <hr/>
                     எடுத்துக்காட்டாக...
                     <div className="flex" >
@@ -31,7 +31,7 @@ export function Help() {
                     <div className="flex" >
                         <Tiles word_length="3" words={[{word: "எழில்", result: [[States.LETTER_MATCHED], [States.LETTER_MATCHED], [States.LETTER_MATCHED]]}]} heading={false} forHelpPage={true}/>
                     </div>
-                    எல்லா எழுத்துக்களும், சொல்லும் சரி. நீங்கள் வெற்றி பெற்றுவிட்டீர்கள்!
+                    எல்லா எழுத்துகளும், சொல்லும் சரி. நீங்கள் வெற்றி பெற்றுவிட்டீர்கள்!
                     <hr/>
                     <h3>"உயிர்மெய் Hints" பொத்தான் அழுத்தியிருக்கும்போது கீழ்கண்ட வண்ண மாதிரிகளும் வரும்.</h3>
                     <div className="flex" >
@@ -41,7 +41,7 @@ export function Help() {
                     <div className="flex" >
                         <Tiles word_length="3" words={[{word: "சான்று", result: [[States.LETTER_NOT_FOUND, States.MEI_MATCHED], [States.LETTER_MATCHED], [States.LETTER_MATCHED]]}]} heading={false} forHelpPage={true}/>
                     </div>
-                    பச்சை இடம் வலம் நோக்கிய பட்டிகள், சா=ச்+ஆ எனப் பிரித்து, &apos;ச&apos; மெய் பொருத்தம் உள்ளது. சா, சி, சு வரிசையில் வேறு மெய்யுடன் முயற்சி செய்யவும்.  இது எந்த இடத்தில் வருகிறதோ அந்த இடத்திற்கு மட்டுமே, எழுத்துக்கு அல்ல.
+                    பச்சை இடம் வலம் நோக்கிய பட்டிகள், சா=ச்+ஆ எனப் பிரித்து, &apos;ச&apos; மெய்ப் பொருத்தம் உள்ளது. சா, சி, சு வரிசையில் வேறு மெய்யுடன் முயற்சி செய்யவும்.  இது எந்த இடத்தில் வருகிறதோ அந்த இடத்திற்கு மட்டுமே, எழுத்துக்கு அல்ல.
                     
                 </div>
                 <div className="self-center">
