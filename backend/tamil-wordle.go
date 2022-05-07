@@ -63,7 +63,7 @@ type CurrentWordLenResponse struct {
 }
 
 func getWordForToday() string {
-	return "மொத்தணும்"
+	return "தென்மதுரை"
 }
 
 func getCurrentWordLenHandler(w http.ResponseWriter, r *http.Request) {
