@@ -236,12 +236,12 @@ func TestVerifyWordWithUyirMei(t *testing.T) {
 	for _, test := range wordTests {
 
 		// TODO: This is a hack to warm up the map. `verifyWordWithUyirMei` should not depend on the local map.
-		todayLettersMap = make(map[string]struct{})
+		todayLettersMap := make(map[string]struct{})
 		for _, letter := range test.right {
 			todayLettersMap[letter] = empty
 		}
 
-		gotResults, gotAllMatched := verifyWordWithUyirMei(test.left, test.right)
+		gotResults, gotAllMatched := verifyWordWithUyirMei(test.left, test.right, todayLettersMap)
 		if !reflect.DeepEqual(gotResults, test.result) {
 			t.Errorf("verifyWordWithUyirMei(%q, %q) = %v, want %v", test.left, test.right, gotResults, test.result)
 		}
