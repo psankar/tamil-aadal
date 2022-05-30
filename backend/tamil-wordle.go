@@ -10,7 +10,7 @@ import (
 )
 
 func getWordForToday() string {
-	return "முற்றுவினை"
+	return "இயைபுத்தொடை"
 }
 
 const (
